@@ -175,6 +175,7 @@
                                               <th>Material</th>
                                               <th>Machine</th>
                                               <th>Station</th>
+                                              <th>Certified User</th>
                                           </tr>
                                       </thead>
                                   </table>
@@ -361,11 +362,12 @@
                                 <label>Material Name</label>
                                 <select class="form-control select2bs5" id="selAddMatProcMatName" name="material_name[]" multiple>
                                 </select>
-                                {{-- <select class="form-control select2bs4" id="selAddMatProcMatName" name="" multiple="">
-
-                                </select> --}}
                               </div>
-
+                              <div class="form-group">
+                                <label>Certified User/s</label>
+                                <select class="form-control select2bs4" id="selAddMatCertifiedUser" name="certified_user[]" multiple>
+                                </select>
+                              </div>
                           </div>
                       </div>
                   </div>
@@ -747,6 +749,9 @@
                 {
                     "data": "stat_details"
                 },
+                {
+                    "data": "operators_info"
+                },
             ],
             "columnDefs": [{
                 "targets": [4],
@@ -979,6 +984,7 @@
             $("#selAddMatProcMachine").val("").trigger('change');
             $('select[id="selAddMatProcMatName"]').val([]).trigger('change');
             $('select[id="selAddMatStation"]').val([]).trigger('change');
+            $('select[id="selAddMatCertifiedUser"]').val([]).trigger('change');
             $('#txtAddMatProcId').val('');
             $('#txtAddMatProcStep').prop('readonly', true);
         }

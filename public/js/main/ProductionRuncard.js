@@ -1,12 +1,54 @@
+function GetDeviceName(cboElement){
+    // console.log('prod_get_device_name');
+    let result = '<option value="" disabled selected> Select Device Name </option>';
+    $.ajax({
+        type: "get",
+        url: "get_data_from_matrix",
+        dataType: "json",
+        beforeSend: function(){
+            result = '<option value="0" disabled selected>--Loading--</option>';
+        },
+        success: function (response) {
+            let device_details = response['device_details'];
+            if(device_details.length > 0) {
+                    result = '<option value="" disabled selected> Select Device Name </option>';
+                for (let index = 0; index < device_details.length; index++) {
+                    result += '<option value="' + device_details[index]['name'] + '">' + device_details[index]['name'] + '</option>';
+                }
+            }else{
+                result = '<option value="0" selected disabled> -- No record found -- </option>';
+            }
+            cboElement.html(result);
+        },
+        error: function(data, xhr, status) {
+            result = '<option value="0" selected disabled> -- Reload Again -- </option>';
+            cboElement.html(result);
+            console.log('Data: ' + data + "\n" + "XHR: " + xhr + "\n" + "Status: " + status);
+        }
+    });
+}
+
 $(document).ready(function(){
 
     $('.select2bs5').select2({
-        theme: 'bootstrap-5'
+        theme: 'bootstrap-5',
     });
 
-    GetDeviceName($('#txtSelectDeviceName'));
+    // Apply Select2 to all select elements inside any modal dynamically
+    $('.modal').on('shown.bs.modal', function () {
+        $(this).find('.select2bs5').each(function() {
+            $(this).select2({
+                theme: 'bootstrap-5',
+                dropdownParent: $(this).closest('.modal') // Ensures correct parent modal
+            });
+        });
+    });
+
+    // GetDeviceName($('#txtSelectDeviceName'));
 
     $('#txtSelectDeviceName').on('change', function(e){
+        // console.log('prod_change_device_name');
+
         let deviceName = $('#txtSelectDeviceName').val();
         $.ajax({
             type: "get",
@@ -21,58 +63,59 @@ $(document).ready(function(){
             success: function (response) {
                 let device_details = response['device_details'];
                 let material_details = response['material_details'];
-                let material_codes = response['material_codes'];
+                // let material_codes = response['material_codes'];
                 let material_class = response['material_class'];
-                console.log(material_codes);
-                // let station_details = response['station_details'];
-                // console.log(station_details);
 
-                $('#txtSearchDeviceCode').val(device_details[0].code);
-                $('#txtSearchMaterialName').val(material_details);
-                $('#txtSearchReqOutput').val(device_details[0].qty_per_reel);
+                if(device_details == 0 && material_details == 0){
+                    toastr.error('No Process Found!, Please Insert Process');
+                    $('#btnAddProductionRuncard').prop('disabled', true);
+                }else{
+                    $('#btnAddProductionRuncard').prop('disabled', false);
 
-                // $('#txtDeviceName', $('#formCNAssemblyRuncard')).val($('#txtSelectDeviceName').val());
-                // $('#txtMaterialName', $('#formCNAssemblyRuncard')).val(material_details);
+                    $('#txtSearchDeviceCode').val(device_details[0].code);
+                    $('#txtSearchMaterialName').val(material_details);
+                    $('#txtSearchReqOutput').val(device_details[0].qty_per_box);
 
-                $('#ResinMatLotNumber').prop('hidden', true); //LAPEROS
-                $('#ContactLotNumber').prop('hidden', true); //CONTACT
-                $('#MELotNumber').prop('hidden', true); //ME
+                    $('#ResinMatLotNumber').prop('hidden', true); //LAPEROS
+                    $('#ContactLotNumber').prop('hidden', true); //CONTACT
+                    $('#MELotNumber').prop('hidden', true); //ME
 
-                $('#formProductionRuncard #txtMatName').prop('required', false);
-                $('#formProductionRuncard #txtContactMatName').prop('required', false);
-                $('#formProductionRuncard #txtMEMaterialName').prop('required', false);
+                    $('#formProductionRuncard #txtMatName').prop('required', false);
+                    $('#formProductionRuncard #txtContactMatName').prop('required', false);
+                    $('#formProductionRuncard #txtMEMaterialName').prop('required', false);
 
-                if(material_details.indexOf('LAPEROS') != -1){//RESIN
-                    $('#ResinMatLotNumber').prop('hidden', false);
-                    $('#formProductionRuncard #txtMatName').prop('required', true);
-                }else if(material_class.indexOf(1) != -1){//RESIN
-                    console.log('test');
-                    $('#ResinMatLotNumber').prop('hidden', false);
-                    $('#formProductionRuncard #txtMatName').prop('required', true);
-                }
-
-                if(material_details.indexOf('CT') != -1){// CONTACT
-                    $('#ContactLotNumber').prop('hidden', false);
-                    $('#formProductionRuncard #txtContactMatName').prop('required', true);
-                }
-
-                if(material_details.indexOf('ME') != -1){// #ME
-                    $('#MELotNumber').prop('hidden', false);
-                    $('#formProductionRuncard #txtMEMaterialName').prop('required', true);
-                }
-
-                //STATIONS
-                let result = '<option value="" disabled selected>-- Select Station --</option>';
-                if (device_details[0].material_process.length > 0) {
-                        result = '<option value="" disabled selected>-- Select Station --</option>';
-                    for (let index = 0; index < device_details[0].material_process.length; index++) {
-                        result += '<option value="' + device_details[0].material_process[index].station_details[0].stations['id'] + '">' + device_details[0].material_process[index].station_details[0].stations['station_name'] + '</option>';
+                    if(material_details.indexOf('LAPEROS') != -1){//RESIN
+                        $('#ResinMatLotNumber').prop('hidden', false);
+                        $('#formProductionRuncard #txtMatName').prop('required', true);
+                    }else if(material_class.indexOf(1) != -1){//RESIN
+                        // console.log('test');
+                        $('#ResinMatLotNumber').prop('hidden', false);
+                        $('#formProductionRuncard #txtMatName').prop('required', true);
                     }
-                } else {
-                    result = '<option value="0" selected disabled> -- No record found -- </option>';
+
+                    if(material_details.indexOf('CT') != -1){// CONTACT
+                        $('#ContactLotNumber').prop('hidden', false);
+                        $('#formProductionRuncard #txtContactMatName').prop('required', true);
+                    }
+
+                    if(material_details.indexOf('ME') != -1){// #ME
+                        $('#MELotNumber').prop('hidden', false);
+                        $('#formProductionRuncard #txtMEMaterialName').prop('required', true);
+                    }
+
+                    //STATIONS
+                    let result = '<option value="" disabled selected>-- Select Station --</option>';
+                    if (device_details[0].material_process.length > 0) {
+                            result = '<option value="" disabled selected>-- Select Station --</option>';
+                        for (let index = 0; index < device_details[0].material_process.length; index++) {
+                            result += '<option value="' + device_details[0].material_process[index].station_details[0].stations['id'] + '">' + device_details[0].material_process[index].station_details[0].stations['station_name'] + '</option>';
+                        }
+                    } else {
+                        result = '<option value="0" selected disabled> -- No record found -- </option>';
+                    }
+                    $('#txtSelectRuncardStation').html(result);
+                    dtProdRuncard.draw();
                 }
-                $('#txtSelectRuncardStation').html(result);
-                dtProdRuncard.draw();
             }
         });
     });
@@ -80,6 +123,7 @@ $(document).ready(function(){
     dtProdRuncard = $("#tblProductionRuncard").DataTable({
         "processing" : true,
         "serverSide" : true,
+        "lengthMenu": [ [25, -1], [25, "All"] ],
         "ajax" : {
             url: "view_production_runcard",
             data: function (param){
@@ -88,12 +132,16 @@ $(document).ready(function(){
         },
         fixedHeader: true,
         "columns":[
+            { "data" : "id", searchable:false,visible:false },
             { "data" : "action", orderable:false, searchable:false },
             { "data" : "status" },
             { "data" : "part_name" },
             { "data" : "po_number" },
             { "data" : "po_quantity" },
             { "data" : "production_lot" },
+            { "data" : "machine_no" },
+            { "data" : "operator_names" },
+            { "data" : "created_at" },
         ],
         "columnDefs": [
             {"className": "dt-center", "targets": "_all"},
@@ -103,6 +151,7 @@ $(document).ready(function(){
                 "defaultContent": "---"
             },
         ],
+        "order": [0, 'desc']
     });
 
     dtProdRuncardStation = $("#tblProdRuncardStation").DataTable({
@@ -150,6 +199,7 @@ $(document).ready(function(){
                 $('#btnAddRuncardStation').prop('disabled', false);
             }
 
+            $("#formProductionRuncard #txtNewlyMaintenance").prop('disabled', true);
             $('#btnSaveRuncardDetails').prop('hidden', false);
 
             $('#btnRuncardDetails').prop('hidden', false);
@@ -158,7 +208,8 @@ $(document).ready(function(){
             // $('#btnScanSZeroTwoProdLot').prop('disabled', false);
             // $('#btnAddRuncardStation').prop('hidden', false);
             $('#btnSubmitAssemblyRuncardData').prop('hidden', true);
-            GetPOFromPPSDB($('.SelPoNumber'), $('#txtSelectDeviceName').val());
+            GetPOFromPPSDB($('#txtPONumber'), $('#txtSelectDeviceName').val());
+            GetMachineNo($('.SelMachineNo'), $('#txtSelectDeviceName').val());
             //
 
             //     GetDocumentNoFromACDCS($('#txtDeviceName').val(), 'R Drawing', $("#txtSelectDocNoRDrawing"));
@@ -188,14 +239,55 @@ $(document).ready(function(){
                 if(po_details.length > 0) {
                         result = '<option value="" disabled selected> Select PO Number </option>';
                     for (let index = 0; index < po_details.length; index++) {
-                        result += '<option value="' + po_details[index]['po_number'] + '">' + po_details[index]['po_number'] + '</option>';
+                        if(po_details[index]['po_number'] == PoNumber || po_details[index]['po_quantity'] > 0){
+                            result += '<option value="' + po_details[index]['po_number'] + '">' + po_details[index]['po_number'] + '</option>';
+                        }
                     }
                 }else{
                     result = '<option value="0" selected disabled> -- No record found -- </option>';
                 }
                 cboElement.html(result);
                 if(PoNumber != null){
-                    cboElement.val(PoNumber).trigger('change');
+                    cboElement.val(PoNumber).trigger('change', ['edit']);
+                    // GetPPSDBDataByPO(PoNumber, device_name, 1);
+                }
+            },
+            error: function(data, xhr, status) {
+                result = '<option value="0" selected disabled> -- Reload Again -- </option>';
+                cboElement.html(result);
+                console.log('Data: ' + data + "\n" + "XHR: " + xhr + "\n" + "Status: " + status);
+            }
+        });
+    }
+
+    function GetMachineNo(cboElement, device_name, MachineNo = null){
+        let result = '<option value="" disabled selected> Select PO Number </option>';
+        $.ajax({
+            method: "get",
+            url: "get_machine_no_from_matrix",
+            data: {
+                'device_name': device_name,
+            },
+            dataType: "json",
+            beforeSend: function(){
+                result = '<option value="0" disabled selected>--Loading--</option>';
+            },
+            success: function (response) {
+                let machine_data = response['machine_data'];
+                if(machine_data.length > 0) {
+                        result = '<option value="" disabled selected> Select Machine Number </option>';
+                    for (let index = 0; index < machine_data.length; index++) {
+                        result += '<option value="' + machine_data[index]['machine_name'] + '">' + machine_data[index]['machine_name'] + '</option>';
+                    }
+                }else if(MachineNo != null){
+                    result = '<option value="" disabled selected> Select Machine Number </option>';
+                    result += '<option value="' + MachineNo + '">' + MachineNo + '</option>';
+                }else{
+                    result = '<option value="0" selected disabled> -- No record found -- </option>';
+                }
+                cboElement.html(result);
+                if(MachineNo != null){
+                    cboElement.val(MachineNo).trigger('change');
                 }
             },
             error: function(data, xhr, status) {
@@ -301,9 +393,22 @@ $(document).ready(function(){
                 $('#formProductionRuncard #txtPartCode').val(prod_runcard_data[0].part_code);
                 // $('#formProductionRuncard #txtPONumber').val(prod_runcard_data[0].po_number);
                 // $('#formProductionRuncard #txtPONumber').val(prod_runcard_data[0].po_number).trigger('change');
-                GetPOFromPPSDB($('.SelPoNumber'), $('#txtSelectDeviceName').val(), prod_runcard_data[0].po_number);
+                GetPOFromPPSDB($('#txtPONumber'), $('#txtSelectDeviceName').val(), prod_runcard_data[0].po_number);
+                GetMachineNo($('.SelMachineNo'), $('#txtSelectDeviceName').val(), prod_runcard_data[0].machine_no);
 
-                $('#formProductionRuncard #txtPOQuantity').val(prod_runcard_data[0].po_quantity);
+                // console.log('production lot lenght',prod_runcard_data[0].production_lot.length);
+                if(prod_runcard_data[0].production_lot.length >= 17){
+                    production_lot_time = prod_runcard_data[0].production_lot.substr(-9);
+                }else{
+                    production_lot_time = prod_runcard_data[0].production_lot.substr(-4);
+                }
+
+                $('#formProductionRuncard #txtProductionLotTime').val(production_lot_time);
+                // console.log('prodlottime', $('#formProductionRuncard #txtProductionLotTime').val());
+
+                $('#formProductionRuncard #txtShipmentOutput').val(prod_runcard_data[0].shipment_output);
+
+                $('#formProductionRuncard #txtPOQty').val(prod_runcard_data[0].po_quantity);
                 $('#formProductionRuncard #txtRequiredOutput').val(prod_runcard_data[0].required_qty);
                 $('#formProductionRuncard #txtProductionLot').val(prod_runcard_data[0].production_lot);
                 $('#formProductionRuncard #txtDrawingNo').val(prod_runcard_data[0].drawing_no);
@@ -338,9 +443,9 @@ $(document).ready(function(){
         $('#btnSubmitAssemblyRuncardData').prop('hidden', true);
     });
 
-    $('.select2bs5').select2( {
-        theme: 'bootstrap-5'
-    });
+    // $('.select2bs5').select2( {
+    //     theme: 'bootstrap-5'
+    // });
 
     const delay = (fn, ms) => {
         let timer = 0
@@ -350,16 +455,48 @@ $(document).ready(function(){
         }
     }
 
-    // $('#formProductionRuncard #txtPONumber').keyup(delay(function(e){
-    $('#formProductionRuncard #txtPONumber').change(delay(function(e){
-       let po_number = $(this).val();
-       let device_name = $('#formProductionRuncard').find('#txtPartName').val();
-       if(po_number != ''){
-        GetPPSDBDataByPO(po_number, device_name);
-       }
+    $('#formProductionRuncard #txtPONumber').change(delay(function(e, triggerMode){
+        console.log('nag run dito 1');
+        let mode = 'new'; // default
+        mode = triggerMode || 'new';
+
+        if (mode === 'new') {
+            console.log('User selected manually → NEW mode');
+            // Your logic for new mode
+        } else if (mode === 'edit') {
+            console.log('Triggered via AJAX → EDIT mode');
+            // Your logic for edit mode
+        }
+
+        let po_number = $(this).val();
+        let device_name = $('#formProductionRuncard').find('#txtPartName').val();
+        // let mode = 'edit';
+        if(po_number != ''){
+            GetPPSDBDataByPO(po_number, device_name, mode);
+            $("#formProductionRuncard #txtNewlyMaintenance").prop('disabled', false);
+        }
     }, 300));
 
-    function GetPPSDBDataByPO(po_number, device_name){
+    // $('#formProductionRuncard #txtPONumber').keyup(delay(function(e){
+    // $('#formProductionRuncard #txtPONumber').click(function(e){
+        // console.log('change po click true');
+    // $("#formProductionRuncard #txtPONumber").focus(function(){
+        // console.log('focus true');
+        // $('#formProductionRuncard #txtPONumber').change(delay(function(e){
+        //         // console.log('change po test true');
+        //     let po_number = $(this).val();
+        //     let device_name = $('#formProductionRuncard').find('#txtPartName').val();
+        //     // let current_value = '0';
+        //     if(po_number != ''){
+        //         GetPPSDBDataByPO(po_number, device_name);
+        //     }
+        // }, 300));
+    // });
+    // });
+
+    function GetPPSDBDataByPO(po_number, device_name, mode){
+        // console.log('nag run dito');
+
         $.ajax({
             url: "search_po_from_ppsdb",
             method: "get",
@@ -370,43 +507,101 @@ $(document).ready(function(){
             },
             dataType: "json",
             success: function(response){
-                if (response['result'] == '1') {
-                    toastr.error('Error, PO Number doesn`t match with the Device Name');
-                }else{
+                let now = new Date();
+                let year = now.getFullYear();
+                    year = year.toString();
+                    year = year.substr(2);
+
+                let month = (now.getMonth() + 1);
+                    month = month.toString();
+                if(month.length == 1){
+                    month = +'0'+month;
+                }
+
+                let date = now.getDate();
+                date = date.toString();
+                if(date.length == 1){
+                    date = +'0'+date;
+                }
+
+                let dieset_no = response['po_details'].dieset_no;
+                let rev_no;
+                let prod_lot;
+                let maintenance;
+                let production_lot_time;
+                if(response['result'] != '0'){
                     let po_details = response['po_details'];
-                    let doc_details = response['acdcs_data'];
-                    // console.log('details', po_details);
                     $("#formProductionRuncard #txtPartName").val(po_details.part_name);
                     $("#formProductionRuncard #txtPartCode").val(po_details.part_code);
                     $("#formProductionRuncard #txtPONumber").val(po_details.po_number);
-                    $("#formProductionRuncard #txtPOQuantity").val(po_details.po_qty);
+                    $("#formProductionRuncard #txtPOQty").val(po_details.order_quantity);
+                    $("#formProductionRuncard #txtPOBalance").val(response['po_balance']);
+                }
+
+                if(response['result'] == '1'){ //RAPID PO RECEIVE & DIESET
+                    // console.log('true');
+                    let po_details = response['po_details'];
+                    $("#formProductionRuncard #txtDrawingNo").val(po_details.drawing_no);
+                    $("#formProductionRuncard #txtDrawingRev").val(po_details.drawing_rev);
+                    rev_no = po_details.drawing_rev;
+                }else if (response['result'] == '2'){ //ACDCS
+                    // toastr.error('Error, PO Number doesn`t match with the Device Name');
+                    let doc_details = response['acdcs_data'];
                     $("#formProductionRuncard #txtDrawingNo").val(doc_details.doc_no);
                     $("#formProductionRuncard #txtDrawingRev").val(doc_details.rev_no);
+                    rev_no = doc_details.rev_no;
+                }
+                // else if(response['result'] == '1'){
+                //     // console.log('true');
+                //     let po_details = response['po_details'];
+                //     $("#formProductionRuncard #txtDrawingNo").val(po_details.drawing_no);
+                //     $("#formProductionRuncard #txtDrawingRev").val(po_details.drawing_rev);
+                //     rev_no = po_details.drawing_rev;
+                // }
 
-                    let now = new Date();
-                    let year = now.getFullYear();
-                        year = year.toString();
-                        year = year.substr(2);
+                //old 01/17/2025
+                // else if(response['result'] == '0'){
+                //     console.log('true');
+                //     let po_details = response['po_details'];
+                //     $("#formProductionRuncard #txtDrawingNo").val(po_details.drawing_no);
+                //     $("#formProductionRuncard #txtDrawingRev").val(po_details.drawing_rev);
+                //     rev_no = po_details.drawing_rev;
+                // }else{
+                //     let doc_details = response['acdcs_data'];
 
-                    let month = (now.getMonth() + 1);
-                        month = month.toString();
-                    if(month.length == 1){
-                        month = +'0'+month;
-                    }
+                //     $("#formProductionRuncard #txtDrawingNo").val(doc_details.doc_no);
+                //     $("#formProductionRuncard #txtDrawingRev").val(doc_details.rev_no);
+                //     rev_no = doc_details.rev_no;
+                // }
 
-                    let date = now.getDate();
-                    date = date.toString();
-                    if(date.length == 1){
-                        date = +'0'+date;
-                    }
+                if($('#formProductionRuncard #txtNewlyMaintenance').prop('checked') == true){
+                    maintenance = '-M';
+                }else{
+                    maintenance = '';
+                }
 
-                    let rev_no = doc_details.rev_no;
-                    let prod_lot = rev_no + year + month + date;
+                if($("#formProductionRuncard #txtProductionLotTime").val() != ''){
+                    production_lot_time = '-' + $("#formProductionRuncard #txtProductionLotTime").val();
+                }else{
+                    production_lot_time = '';
+                }
+
+                prod_lot = dieset_no + rev_no + year + month + date + maintenance + production_lot_time;
+                if(mode === 'new'){
                     $("#formProductionRuncard #txtProductionLot").val(prod_lot);
                 }
             }
         });
     }
+
+    // $('#formProductionRuncard #txtNewlyMaintenance').click(function(e){
+    //     if($(this).prop('checked')){
+    //         let ProductionLot = $('#txtProductionLot').val();
+    //         let ProductionLotwithM = `${ProductionLot}-M`;
+    //         $('#txtProductionLot').val(ProductionLotwithM)
+    //         console.log('clark test');
+    //     }
+    // });
 
     $("#modalProdRuncard").on('hidden.bs.modal', function () {
         // Reset form values
@@ -420,15 +615,37 @@ $(document).ready(function(){
     });
 
     $('#txtProductionLotTime').mask('0000-0000', {reverse: false});
-        $('#txtProductionLotTime').keyup(delay(function(e){
+    $('#txtProductionLotTime').keyup(delay(function(e){
+            console.log('nag run dito');
+
             let textProductionLot = $('#txtProductionLot').val();
             let textProductionLotTime = $('#txtProductionLotTime').val();
-            if(textProductionLotTime.length >= 9){ //check if the production lot time is filled-up completely
-                if(textProductionLot.length > 8){ //check if the production lot no already have time, if true remove the existing time
+            $("#formProductionRuncard #txtNewlyMaintenance").prop('disabled', true);
+
+            if(textProductionLotTime.length == 9){ //check if the production lot time is filled-up completely
+                if(textProductionLot.length > 13 && $('#formProductionRuncard #txtNewlyMaintenance').prop('checked') == true){ //check if the production lot_no already have time, if true remove the existing time
+                    textProductionLot = textProductionLot.slice(0, -12);
+                }else if(textProductionLot.length > 11 && $('#formProductionRuncard #txtNewlyMaintenance').prop('checked') == false){
                     textProductionLot = textProductionLot.slice(0, -10);
                 }
+
+                if($('#formProductionRuncard #txtNewlyMaintenance').prop('checked')){
+                    textProductionLot = `${textProductionLot}-M`;
+                }
+
                 let concattedProductionLot = `${textProductionLot}-${textProductionLotTime}`;
                 $('#txtProductionLot').val(concattedProductionLot)
+
+            }else if($('#formProductionRuncard #txtProductionLotTime').val() == ''){
+                $('#formProductionRuncard #txtNewlyMaintenance').prop('disabled', false);
+                newProductionLot = $('#txtProductionLot').val();
+
+                if(textProductionLot.length > 10 && $('#formProductionRuncard #txtNewlyMaintenance').prop('checked') == true){
+                    newProductionLot = newProductionLot.slice(0, -12);
+                }else if(textProductionLot.length > 9 && $('#formProductionRuncard #txtNewlyMaintenance').prop('checked') == false){
+                    newProductionLot = newProductionLot.slice(0, -10);
+                }
+                $('#txtProductionLot').val(newProductionLot);
             }
     }, 400));
 
@@ -447,11 +664,6 @@ $(document).ready(function(){
     });
 
     $('#textQrScanner').keyup(delay(function(e){
-        // const qrScannerValue = $('#textQrScanner').val();
-        // let ScanQrCodeVal = JSON.parse(qrScannerValue)
-                // getLotNo =  ScanQrCodeVal.lot_no
-            // qrScannerValue = qrScannerValue.lot_no;
-            // console.log(qrScannerValue.lot_no);
         let FormValueMatName = $('#modalQrScanner').attr('data-form-mat-name');
         let FormValueMatLotNo = $('#modalQrScanner').attr('data-form-lotnumber');
         console.log('qrheader',FormValueMatName, FormValueMatLotNo);
@@ -481,11 +693,8 @@ $(document).ready(function(){
                 $('#modalScanQr').modal('hide');
                 return;
             }else{
-                // validateScannedMaterial($('#txtPartName').val(),explodedMat[3], '1st Stamping', function(result){
-
-            // $('#textQrScanner').val(''); // Clear after enter
                 validateScannedMaterial(explodedMat[0], $('#txtPartName').val(), Material, MaterialClass, function(result){
-                    // validateScannedMaterial($('#txtPartName').val(),explodedMat[3], '1st Stamping', function(result){
+                  //  // validateScannedMaterial($('#txtPartName').val(),explodedMat[3], '1st Stamping', function(result){
                     if(result != false){
                         $(`#${FormValueMatName}`).val(result);
                         $(`#${FormValueMatLotNo}`).val(explodedMat[0]);
@@ -498,53 +707,8 @@ $(document).ready(function(){
                     }
                 });
             }
-            // switch (formId) {
-            //     case 'ScanPZeroTwoProdLot':
-            //         production_lot_no = ScanQrCodeVal.production_lot;
-            //         verifyProdLotfromMolding(production_lot_no, '', formId, 'txtPZeroTwoProdLot', 'txtPZeroTwoDeviceId', 'CN171P-02#IN-VE', 'txtPZeroTwoDevicePO','txtPZeroTwoDeviceQty');
-            //         break;
-            //     case 'ScanSZeroSevenProdLot':
-            //         production_lot_no = ScanQrCodeVal.production_lot;
-            //         verifyProdLotfromMolding(production_lot_no, '', formId, 'txtSZeroSevenProdLot', 'txtSZeroSevenDeviceId', 'CN171S-07#IN-VE', 'txtSZeroSevenDevicePO','txtSZeroSevenDeviceQty');
-            //         break;
-            //     case 'ScanSZeroTwoProdLot':
-            //         production_lot_no = ScanQrCodeVal.lot_no;
-            //         production_lot_ext = ScanQrCodeVal.lot_no_ext;
-            //         verifyProdLotfromMolding(production_lot_no, production_lot_ext, formId, 'txtSZeroTwoProdLot', 'txtSZeroTwoDeviceId', 'CN171S-02#MO-VE', 'txtSZeroTwoDevicePO', 'txtSZeroTwoDeviceQty');
-            //         break;
-            //     default:
-            //         break;
-            // }
         }
     }, 100));
-
-    // $('#txtScanQrCode').on('keyup', function(e){
-    //     if(e.keyCode == 13){
-    //         let explodedMat = $(this).val().split(' | ');
-    //         console.log(explodedMat);
-    //         if(explodedMat.length != 4){
-    //             toastr.error('Invalid Sticker');
-    //             $(this).val('');
-    //             $('#modalScanQr').modal('hide');
-    //             return;
-    //         }else{
-    //             validateScannedMaterial($('#txtPartName').val(),explodedMat[3], '1st Stamping', function(result){
-    //                 if(result == true){
-    //                     $('#txtMaterialLot').val(explodedMat[0]);
-    //                     $('#txtMaterialLotQty').val(explodedMat[1]);
-    //                 }
-    //                 else{
-    //                     toastr.error('Scanned material is not for this Device');
-    //                 }
-    //             });
-    //         }
-
-    //         // console.log(explodedMat);
-    //         // $(`#${multipleMatId}`).val($(this).val());
-    //         $(this).val('');
-    //         $('#modalScanQr').modal('hide');
-    //     }
-    // });
 
     const validateScannedMaterial = (LotNumber, DeviceName, Material, MaterialClass, callback) => {
         $.ajax({
@@ -591,66 +755,6 @@ $(document).ready(function(){
         });
     }
 
-    // CHRIS CODE
-    // $('#txtScanQrCode').on('keyup', function(e){
-    //     if(e.keyCode == 13){
-    //         let explodedMat = $(this).val().split(' | ');
-    //         console.log(explodedMat);
-    //         if(explodedMat.length != 4){
-    //             toastr.error('Invalid Sticker');
-    //             $(this).val('');
-    //             $('#modalScanQr').modal('hide');
-    //             return;
-    //         }
-    //         else{
-    //             validateScannedMaterial($('#txtMatName').val(),explodedMat[3], '1st Stamping', function(result){
-    //                 if(result == true){
-    //                     $('#txtMaterialLot').val(explodedMat[0]);
-    //                     $('#txtMaterialLotQty').val(explodedMat[1]);
-    //                 }
-    //                 else{
-    //                     toastr.error('Scanned material is not for this Device');
-    //                 }
-    //             });
-    //         }
-
-    //         // console.log(explodedMat);
-    //         // $(`#${multipleMatId}`).val($(this).val());
-    //         $(this).val('');
-    //         $('#modalScanQr').modal('hide');
-    //     }
-    // });
-    // CHRIS CODE
-
-    // $('#textQrScanner').keyup(delay(function(e){
-    //     const qrScannerValue = $('#textQrScanner').val();
-    //     let ScanQrCodeVal = JSON.parse(qrScannerValue)
-    //             // getLotNo =  ScanQrCodeVal.lot_no
-    //         // qrScannerValue = qrScannerValue.lot_no;
-    //         // console.log(qrScannerValue.lot_no);
-    //     let formId = $('#modalQrScanner').attr('data-form-id');
-    //     if( e.keyCode == 13 ){
-    //         $('#textQrScanner').val(''); // Clear after enter
-    //         switch (formId) {
-    //             case 'ScanPZeroTwoProdLot':
-    //                 production_lot_no = ScanQrCodeVal.production_lot;
-    //                 verifyProdLotfromMolding(production_lot_no, '', formId, 'txtPZeroTwoProdLot', 'txtPZeroTwoDeviceId', 'CN171P-02#IN-VE', 'txtPZeroTwoDevicePO','txtPZeroTwoDeviceQty');
-    //                 break;
-    //             case 'ScanSZeroSevenProdLot':
-    //                 production_lot_no = ScanQrCodeVal.production_lot;
-    //                 verifyProdLotfromMolding(production_lot_no, '', formId, 'txtSZeroSevenProdLot', 'txtSZeroSevenDeviceId', 'CN171S-07#IN-VE', 'txtSZeroSevenDevicePO','txtSZeroSevenDeviceQty');
-    //                 break;
-    //             case 'ScanSZeroTwoProdLot':
-    //                 production_lot_no = ScanQrCodeVal.lot_no;
-    //                 production_lot_ext = ScanQrCodeVal.lot_no_ext;
-    //                 verifyProdLotfromMolding(production_lot_no, production_lot_ext, formId, 'txtSZeroTwoProdLot', 'txtSZeroTwoDeviceId', 'CN171S-02#MO-VE', 'txtSZeroTwoDevicePO', 'txtSZeroTwoDeviceQty');
-    //                 break;
-    //             default:
-    //                 break;
-    //         }
-    //     }
-    // }, 100));
-
     $('#btnSaveRuncardDetails').click( function(e){
         e.preventDefault();
         // let data = $('#formCNAssemblyRuncard').serialize();
@@ -668,6 +772,14 @@ $(document).ready(function(){
                     } else {
                         $("#txtPONumber").addClass('is-invalid');
                         $("#txtPONumber").attr('title', response['error']['po_number']);
+                    }
+
+                    if (response['error']['machine_number'] === undefined) {
+                        $("#txtMachineNumber").removeClass('is-invalid');
+                        $("#txtMachineNumber").attr('title', '');
+                    } else {
+                        $("#txtMachineNumber").addClass('is-invalid');
+                        $("#txtMachineNumber").attr('title', response['error']['machine_number']);
                     }
 
                     if (response['error']['production_lot_time'] === undefined) {
@@ -734,7 +846,7 @@ $(document).ready(function(){
                 CheckExistingSubStations(production_runcard_id);
                 $('#btnAddRuncardStation').attr('runcard_id', prod_runcard_data[0].id);
 
-                // $('#txtProductionLotTime').prop('disabled', true);
+                $('#btnSaveRuncardDetails').prop('hidden', false);
                 $('#btnRuncardDetails').prop('hidden', false);
                 $('#txtPONumber').prop('disabled', false);
                 $('#btnScanMaterialLot').prop('disabled', false);
@@ -743,7 +855,6 @@ $(document).ready(function(){
                 $('#btnAddRuncardStation').prop('hidden', false);
                 $('#btnAddRuncardStation').prop('disabled', false);
                 $('#btnSubmitAssemblyRuncardData').prop('hidden', true);
-                $('#btnSaveRuncardDetails').prop('hidden', false);
                 $('#btnSaveNewRuncardStation').prop('hidden', false);
 
                 $('#modalProdRuncard').modal('show');
@@ -751,13 +862,23 @@ $(document).ready(function(){
                 $('#formProductionRuncard #txtPartName').val(prod_runcard_data[0].part_name);
                 $('#formProductionRuncard #txtPartCode').val(prod_runcard_data[0].part_code);
                 // $('#formProductionRuncard #txtPONumber').val(prod_runcard_data[0].po_number);
-                GetPOFromPPSDB($('.SelPoNumber'), $('#txtSelectDeviceName').val(), prod_runcard_data[0].po_number);
+                GetPOFromPPSDB($('#txtPONumber'), $('#txtSelectDeviceName').val(), prod_runcard_data[0].po_number);
+                GetMachineNo($('.SelMachineNo'), $('#txtSelectDeviceName').val(), prod_runcard_data[0].machine_no);
 
-                $('#formProductionRuncard #txtPOQuantity').val(prod_runcard_data[0].po_quantity);
+                $('#formProductionRuncard #txtPOQty').val(prod_runcard_data[0].po_quantity);
                 $('#formProductionRuncard #txtRequiredOutput').val(prod_runcard_data[0].required_qty);
 
-                production_lot_time = prod_runcard_data[0].production_lot.substr(-9);
+                // console.log('production lot lenght',prod_runcard_data[0].production_lot.length);
+                if(prod_runcard_data[0].production_lot.length >= 17){
+                    production_lot_time = prod_runcard_data[0].production_lot.substr(-9);
+                }else{
+                    production_lot_time = prod_runcard_data[0].production_lot.substr(-4);
+                }
+
                 $('#formProductionRuncard #txtProductionLotTime').val(production_lot_time);
+                console.log('prodlottime', $('#formProductionRuncard #txtProductionLotTime').val());
+
+                $('#formProductionRuncard #txtShipmentOutput').val(prod_runcard_data[0].shipment_output);
 
                 $('#formProductionRuncard #txtProductionLot').val(prod_runcard_data[0].production_lot);
                 $('#formProductionRuncard #txtDrawingNo').val(prod_runcard_data[0].drawing_no);
@@ -797,9 +918,19 @@ $(document).ready(function(){
 
                 if(response['output_quantity'] != ''){
                     $('#txtInputQuantity').val(response['output_quantity']);
-                    $('#txtInputQuantity').prop('readonly', true);
-                }else{
-                    // $('#txtInputQuantity').val($('#txtRequiredOutput').val());
+                    // $('#txtInputQuantity').prop('readonly', true); clark comment 10/28/25 due to request
+                    $('#txtInputQuantity').prop('readonly', false);
+                }else{ //clark 01/07/2025
+                    $('#txtInputQuantity').prop('readonly', false);
+                    let po_balance = parseInt($('#txtPOBalance').val());
+                    let packing_qty = parseInt($('#txtRequiredOutput').val());
+                    // console.log(po_balance < packing_qty);
+                    if(po_balance < packing_qty){
+                        toastr.warning('PO Balance is less than Packing Qty, Remaining PO Balance will be used');
+                        $('#txtInputQuantity').val($('#txtPOBalance').val());
+                    }else{
+                        $('#txtInputQuantity').val($('#txtRequiredOutput').val());
+                    }
                 }
 
                 if(mode == 'updating'){
@@ -809,12 +940,18 @@ $(document).ready(function(){
                         $('#btnSubmitAssemblyRuncardData').prop('hidden', false);
                     }else{
                         $('#btnAddRuncardStation').prop('disabled', false);
+                        if(response['current_step'] > 0 && response['existing_ipqc'] == 'false'){ //NO EXISTING IPQC
+                            $('#btnAddRuncardStation').addClass('d-none');
+                            $('#btnAddQualificationData').removeClass('d-none');
+                        }else{// EXITING IPQC
+                            $('#btnAddRuncardStation').removeClass('d-none');
+                            $('#btnAddQualificationData').addClass('d-none');
+                        }
                     }
                 }else if(mode == 'viewing'){
                     console.log('viewing');
                     $('#btnSubmitAssemblyRuncardData').prop('hidden', true);
                 }
-
             }
         });
     }
@@ -844,6 +981,11 @@ $(document).ready(function(){
         // $('#buttonAddRuncardModeOfDefect').prop('hidden', false);
          $('#formAddProductionRuncardStation #txtFrmStationsRuncardId').val(runcard_id);
          $("#buttonAddRuncardModeOfDefect").prop('disabled', true);
+
+        $("#txtInputQuantity").prop('disabled', false);
+        $("#txtOutputQuantity").prop('disabled', false);
+        $("#txtNgQuantity").prop('disabled', false);
+        $("#txtRemarks").prop('disabled', false);
     });
 
     $('#txtOutputQuantity, #txtInputQuantity').each(function(e){
@@ -905,59 +1047,30 @@ $(document).ready(function(){
             // console.log(input_val);
             // console.log(output_val);
             // CalculateTotalOutputandYield(output_val,input_val);
-        }, 1000));
+        }, 500));
     });
-
-    // const CalculateTotalOutputandYield = function (output_val, input_val){
-    //     // let station_yield = (ng_value / input_val) * 100;
-
-    //     // $('#formProductionRuncard #txtPONumber').keyup(delay(function(e){
-    //     //     let po_number = $(this).val();
-    //     //     if(po_number != ''){
-    //     //      GetPPSDBDataByPO(po_number);
-    //     //     }
-    //     //  }, 300));
-    //     let ng_value;
-    //     if(output_val === "" || isNaN(output_val) || input_val === "" || isNaN(input_val)){
-    //         ng_value = '';
-    //     }else if(output_val != "" || input_val != ""){
-    //         ng_value = input_val - output_val;
-    //         if(ng_value < 0){
-    //             Swal.fire({
-    //                 position: "center",
-    //                 icon: "error",
-    //                 title: "Output Quantity cannot be less than Zero!",
-    //                 showConfirmButton: false,
-    //                 timer: 1500
-    //             });
-
-    //             $('#txtInputQuantity').val('');
-    //             $('#txtOutputQuantity').val('');
-
-    //             ng_value = 0;
-    //             return;
-    //         }
-    //     }
-    //     $('#txtNgQuantity').val(ng_value);
-    // };
 
     $(document).on('click', '#btnSaveNewRuncardStation',function(e){
         e.preventDefault();
+        let device_name = $.param({
+            device_name : $('#txtPartName').val()
+        });
         $.ajax({
             type:"POST",
             url: "add_runcard_station_data",
-            data: $('#formAddProductionRuncardStation').serialize() + '&' + $('#formAddQualiDetails').serialize(),
+            data: $('#formAddProductionRuncardStation').serialize() + '&' + $('#formAddQualiDetails').serialize() + '&' + device_name,
             dataType: "json",
             success: function(response){
-                if (response['result'] == 1) {
+                if(response['result'] == 1){
                     toastr.success('Successful!');
-                    $('#txtShipmentOutput').val(response['shipment_output']);
+                    $('#formProductionRuncard #txtShipmentOutput').val(response['shipment_output']);
                     $("#modalAddStation").modal('hide');
                     dtProdRuncardStation.draw();
                     CheckExistingStations($('#txtFrmStationsRuncardId').val(), 'updating');
                     CheckExistingSubStations($('#txtFrmStationsRuncardId').val(), 'updating');
                 }else{
-                    toastr.error('Error!, Please Contanct ISS Local 208');
+
+                    toastr.error(response.error_msg ?? 'Error!, Please Contanct ISS Local 208');
                 }
             }
         });
@@ -976,7 +1089,7 @@ $(document).ready(function(){
         // $('.QualiDetailsDiv').addClass('d-none', true);
         // NEW CODE CLARK 07292024
 
-        // $('#txtInputQuantity').prop('disabled', false);
+        $('#txtInputQuantity').prop('disabled', false);
         $('#txtOutputQuantity').prop('disabled', false);
         $('#txtNgQuantity').prop('disabled', false);
         $('#txtSelectDocNoRDrawing').prop('disabled', false);
@@ -984,9 +1097,6 @@ $(document).ready(function(){
         $('#txtSelectDocNoGDrawing').prop('disabled', false);
         $('#txtRemarks').prop('disabled', false);
         $('#buttonAddRuncardModeOfDefect').prop('hidden', false);
-        // $('#tableRuncardStationMOD').prop('disabled', false);
-        // $("#tableRuncardStationMOD").find("input,button,textarea,select").attr("disabled", "disabled");
-        // $('.buttonRemoveMOD').attr('disabled', false);
         $('#btnSaveNewRuncardStation').prop('hidden', false);
         $('#modalAddStation').modal('show');
     });
@@ -1002,14 +1112,11 @@ $(document).ready(function(){
         $('#txtInputQuantity').prop('disabled', true);
         $('#txtOutputQuantity').prop('disabled', true);
         $('#txtNgQuantity').prop('disabled', true);
-        $('#txtSelectDocNoRDrawing').prop('disabled', true);
-        $('#txtSelectDocNoADrawing').prop('disabled', true);
-        $('#txtSelectDocNoGDrawing').prop('disabled', true);
+        // $('#txtSelectDocNoRDrawing').prop('disabled', true);
+        // $('#txtSelectDocNoADrawing').prop('disabled', true);
+        // $('#txtSelectDocNoGDrawing').prop('disabled', true);
         $('#txtRemarks').prop('disabled', true);
         $('#buttonAddRuncardModeOfDefect').prop('hidden', true);
-        // $('#tableRuncardStationMOD').prop('disabled', true);
-        // $("#tableRuncardStationMOD").find("input,button,textarea,select").attr("disabled", "disabled");
-        // $('.buttonRemoveMOD').attr('disabled', true);
         $('#btnSaveNewRuncardStation').prop('hidden', true);
         $('#modalAddStation').modal('show');
     });
@@ -1056,8 +1163,7 @@ $(document).ready(function(){
                     for(let index = 0; index < response['data'].length; index++){
                         result += `<option value="${response['data'][index].id}">${response['data'][index].defects}</option>`;
                     }
-                }
-                else{
+                }else{
                     result = `<option value="0" selected disabled> - No data found - </option>`;
                 }
                 elementId.html(result);
@@ -1178,12 +1284,33 @@ $(document).ready(function(){
                 $('#formAddProductionRuncardStation #txtStep').val(station_data.station_step);
                 $('#formAddProductionRuncardStation #txtSubStationStep').val(station_data.sub_station_step);
 
-                $('#formAddProductionRuncardStation #txtShipmentOutput').val(station_data.shipment_output);
+                $('#formProductionRuncard #txtShipmentOutput').val(station_data.shipment_output);
 
                 $('#formAddProductionRuncardStation #txtRemarks').val(station_data.station_remarks);
-                $('#formAddProductionRuncardStation #txtMachineNo').val(station_data.station_plastic_injection_machine_no);
+                // $('#formAddProductionRuncardStation #txtMachineNo').val(station_data.station_plastic_injection_machine_no);
                 $('#formAddProductionRuncardStation #txtDate').val(station_data.station_date);
                 // $('#formAddProductionRuncardStation #txtOperatorName').val(station_data.station_operator_name);
+
+                $('#formAddProductionRuncardStation #txtAnnealingMachineNo').val(station_data.station_machine_no_annealing);
+                $('#formAddProductionRuncardStation #txtSamplingPcs').val(station_data.station_sampling_annealing);
+
+                if(station_data.station_type_annealing == 1){
+                    $('#formAddProductionRuncardStation #txt100Annealing').prop('checked', true);
+                }else if(station_data.station_type_annealing == 2){
+                    $('#formAddProductionRuncardStation #txtSamplingAnnealing').prop('checked', true);
+                }else{
+                    $('#formAddProductionRuncardStation #txt100Annealing').prop('checked', false);
+                    $('#formAddProductionRuncardStation #txtSamplingAnnealing').prop('checked', false);
+                }
+
+                if(station_data.station_sampling_result_annealing == 1){
+                    $('#formAddProductionRuncardStation #txtOkSample').prop('checked', true);
+                }else if(station_data.station_sampling_result_annealing == 2){
+                    $('#formAddProductionRuncardStation #txtNgSample').prop('checked', true);
+                }else{
+                    $('#formAddProductionRuncardStation #txtOkSample').prop('checked', false);
+                    $('#formAddProductionRuncardStation #txtNgSample').prop('checked', false);
+                }
                 $('#formAddProductionRuncardStation #txtOperatorName').val(station_data.first_name+' '+station_data.last_name);
                 $('#formAddProductionRuncardStation #txtInputQuantity').val(station_data.station_input_qty);
                 $('#formAddProductionRuncardStation #txtOutputQuantity').val(station_data.station_output_qty);
@@ -1206,7 +1333,7 @@ $(document).ready(function(){
                 $('#formAddQualiDetails #txtDefectCheckpointRemarks').val(station_data.quali_defect_remarks);
                 // $('#formAddProductionRuncardStation #txtModeOfDefect').val(runcard_station_data.mode_of_defect);
 
-                $.each(station_data.defect_checkpoints ,function( value){
+                $.each(station_data.defect_checkpoints ,function(value){
                     $("#txtDefectCheckpoint option[value="+value+"]").prop('selected', true);
                 });
 
@@ -1258,36 +1385,38 @@ $(document).ready(function(){
         });
     }
 
-    function GetDeviceName(cboElement){
-        let result = '<option value="" disabled selected> Select Device Name </option>';
-        $.ajax({
-            type: "get",
-            url: "get_data_from_matrix",
-            dataType: "json",
-            beforeSend: function(){
-                result = '<option value="0" disabled selected>--Loading--</option>';
-            },
-            success: function (response) {
-                let device_details = response['device_details'];
-                if(device_details.length > 0) {
-                        result = '<option value="" disabled selected> Select Device Name </option>';
-                    for (let index = 0; index < device_details.length; index++) {
-                        result += '<option value="' + device_details[index]['name'] + '">' + device_details[index]['name'] + '</option>';
-                    }
-                }else{
-                    result = '<option value="0" selected disabled> -- No record found -- </option>';
-                }
-                cboElement.html(result);
-            },
-            error: function(data, xhr, status) {
-                result = '<option value="0" selected disabled> -- Reload Again -- </option>';
-                cboElement.html(result);
-                console.log('Data: ' + data + "\n" + "XHR: " + xhr + "\n" + "Status: " + status);
-            }
-        });
-    }
+    // function GetDeviceName(cboElement){
+    //     console.log('prod_get_device_name');
+    //     let result = '<option value="" disabled selected> Select Device Name </option>';
+    //     $.ajax({
+    //         type: "get",
+    //         url: "get_data_from_matrix",
+    //         dataType: "json",
+    //         beforeSend: function(){
+    //             result = '<option value="0" disabled selected>--Loading--</option>';
+    //         },
+    //         success: function (response) {
+    //             let device_details = response['device_details'];
+    //             if(device_details.length > 0) {
+    //                     result = '<option value="" disabled selected> Select Device Name </option>';
+    //                 for (let index = 0; index < device_details.length; index++) {
+    //                     result += '<option value="' + device_details[index]['name'] + '">' + device_details[index]['name'] + '</option>';
+    //                 }
+    //             }else{
+    //                 result = '<option value="0" selected disabled> -- No record found -- </option>';
+    //             }
+    //             cboElement.html(result);
+    //         },
+    //         error: function(data, xhr, status) {
+    //             result = '<option value="0" selected disabled> -- Reload Again -- </option>';
+    //             cboElement.html(result);
+    //             console.log('Data: ' + data + "\n" + "XHR: " + xhr + "\n" + "Status: " + status);
+    //         }
+    //     });
+    // }
 
     function GetStations(cboElement, step = null, is_ud_ptnr = null){
+        // console.log('prod_get_station');
         let result = '<option value="" disabled selected>-- Select Station --</option>';
         // let deviceName = $('#txtSelectDeviceName').val();
         let deviceName = $('#txtPartName').val();
@@ -1300,45 +1429,30 @@ $(document).ready(function(){
             dataType: "json",
             beforeSend: function(){
                 result = '<option value="0" disabled selected>--Loading--</option>';
-                // cboElement.html(result);
             },
             success: function (response) {
                 let device_details = response['device_details'];
-
                 if(device_details[0].material_process.length > 0) {
                         result = '<option value="" disabled selected>-- Select Station --</option>';
-                        // result += '<option step="0" value="">-- CLARK --</option>';
                     for (let index = 0; index < device_details[0].material_process.length; index++) {
-                        result += '<option step="'+ device_details[0].material_process[index].step +'" value="' + device_details[0].material_process[index].station_details[0].stations['id'] + '">' + device_details[0].material_process[index].station_details[0].stations['station_name'] + '</option>';
+                        result += '<option step="'+ device_details[0].material_process[index].step +'" stations_name="'+ device_details[0].material_process[index].station_details[0].stations['station_name'] +'" value="' + device_details[0].material_process[index].station_details[0].stations['id'] + '">' + device_details[0].material_process[index].station_details[0].stations['station_name'] + '</option>';
                     }
                 }else{
                     result = '<option value="0" selected disabled> -- No record found -- </option>';
                 }
                 cboElement.html(result);
 
+                console.log('test', $("#txtSelectRuncardStation option[step='"+step+"']"));
                 $("#txtSelectRuncardStation option[step='"+step+"']").attr('selected', true);
                 $("#txtRuncardStation").val($("#txtSelectRuncardStation option[step='"+step+"']").val());
 
-                // if(deviceName == 'CN171P-007-1002-VE(01)'){
-                //     if(step == 1){//Lubricant Coating Station
-                //         $('#LubricantCoatingDiv').addClass('d-none');
-                //         $('#VisualInspDocNoDiv').addClass('d-none');
-                //     }else if(step == 2){
-                //         $('#LubricantCoatingDiv').addClass('d-none');
-                //         $('#VisualInspDocNoDiv').removeClass('d-none');
-                //     }else{
-                //         $('#LubricantCoatingDiv').addClass('d-none');
-                //         $('#VisualInspDocNoDiv').addClass('d-none');
-                //     }
-                // }else if(deviceName == 'CN171S-007-1002-VE(01)'){
-                //     if(step == 3){// Visual Inspection
-                //         $('#LubricantCoatingDiv').addClass('d-none');
-                //         $('#VisualInspDocNoDiv').removeClass('d-none');
-                //     }else{
-                //         $('#LubricantCoatingDiv').addClass('d-none');
-                //         $('#VisualInspDocNoDiv').addClass('d-none');
-                //     }
-                // }
+                if($("#txtSelectRuncardStation option[step='"+step+"']").prop('checked')){
+                    if($("#txtSelectRuncardStation option[step='"+step+"']")[0].outerText == 'Annealing'){
+                        $('#AnnealingAddDiv').removeClass('d-none');
+                    }else{
+                        $('#AnnealingAddDiv').addClass('d-none');
+                    }
+                }
             },
             error: function(data, xhr, status) {
                 result = '<option value="0" selected disabled> -- Reload Again -- </option>';
@@ -1349,8 +1463,8 @@ $(document).ready(function(){
     }
 
     function GetSubStations(cboElement, step = null){
-        let sub_station = ['N/A', 'Rework', 'Segregation', 'Airblowing', 'Visual Inspection'];
-        let sub_station_step = ['1', '2', '3', '4', '5'];
+        let sub_station = ['N/A', 'N/A', 'Rework', 'Segregation', 'Airblowing', 'Visual Inspection'];
+        let sub_station_step = ['1', '2', '3', '4', '5', '6'];
 
         let result = '<option value="" disabled selected>-- Select Sub Station --</option>';
             for (let index = 0; index < sub_station.length; index++){
@@ -1361,7 +1475,6 @@ $(document).ready(function(){
         $("#txtSelectRuncardSubStation option[step='"+step+"']").attr('selected', true);
         $("#txtRuncardSubStation").val($("#txtSelectRuncardSubStation option[step='"+step+"']").val());
     }
-
 
     $(document).on('click', '#btnPrintProdRuncard', function(e){
         e.preventDefault();
@@ -1375,22 +1488,19 @@ $(document).ready(function(){
             },
             dataType: "json",
             success: function (response) {
-                console.log(response);
-                // response['label_hidden'][0]['id'] = id;
-                // console.log(response['label_hidden']);
-                // for(let x = 0; x < response['label_hidden'].length; x++){
-                //     let dataToAppend = `
-                //     <img src="${response['label_hidden'][x]['img']}" style="max-width: 200px;"></img>
-                //     `;
-                //     $('#hiddenPreview').append(dataToAppend)
-                // }
-
                 $("#img_barcode_PO").attr('src', response['qr_code']);
                 $("#img_barcode_PO_text").html(response['label']);
                 img_barcode_PO_text_hidden = response['label_hidden'];
                 $('#modalAssemblyPrintQr').modal('show');
+
+                // modal-title
             }
         });
+    });
+
+    $(document).on('click', '#btnTestPrint', function(e){
+        e.preventDefault();
+        $('#modalNotification').modal('show');
     });
 
     $('#btnAssemblyPrintQrCode').on('click', function(){

@@ -28,26 +28,88 @@ class ProductionRuncardController extends Controller
         return response()->json(['data' => $modeOfDefectResult]);
     }
 
+    public function GetMachineNoFromMatrix(Request $request){
+        $test = DB::connection('mysql')->select("SELECT mat_proc_machines.machine_name, mat_proc_machines.machine_code FROM devices
+                        INNER JOIN material_processes AS mat_process ON devices.id = mat_process.device_id
+                        INNER JOIN material_process_machines AS mat_proc_machines  ON mat_process.id = mat_proc_machines.mat_proc_id
+                        WHERE devices.name = '$request->device_name'
+            ");
+        // return $test;
+        return response()->json(['machine_data' => $test]);
+    }
+
     public function viewProdRuncard(Request $request){
+            // $superUserInfo = Auth::user();
+            // $is_super_user = 0;
+            // if($superUserInfo->user_level_id == 1){
+            //     $is_super_user = 1;
+            // }
             $ProdRuncardData = DB::table('production_runcards AS runcard')
+                                    // ->select('runcard.*', DB::raw("CONCAT(users.firstname, ' ', users.lastname) AS operator_name"))
                                     ->select('*')
-                                    ->when($request->device_name, function ($query) use ($request){
-                                        return $query ->where('runcard.part_name', $request->device_name)
-                                                      ->whereNull('runcard.deleted_at');
-                                    })
+                                    // ->join('production_runcard_stations AS stations', 'runcard.id', '=', 'stations.prod_runcards_id')
+                                    // ->join('users', 'stations.last_updated_by', '=', 'users.id')
+                                    // ->when($request->device_name, function ($query) use ($request){
+                                    //     return $query ->where('runcard.part_name', $request->device_name)
+                                    //                   ->whereNull('runcard.deleted_at');
+                                    // })
+                                    ->where('runcard.part_name', $request->device_name)
+                                    ->whereNull('runcard.deleted_at')
                                     ->get();
+
             // $ProdRuncardData = DB::connection('mysql')->select("SELECT a.* FROM production_runcards AS a
             //                                 WHERE a.device_name = '$request->device_name'
             //                                 ORDER BY a.id DESC
             // ");
 
+            // $flattened_array = [];
+            // $test = DB::table('production_runcard_stations AS stations')
+            //         ->select(DB::raw("CONCAT(users.firstname, ' ', users.lastname) AS operator_name"))
+            //         ->join('users', 'stations.last_updated_by', '=', 'users.id')
+            //         ->where('stations.prod_runcards_id', $ProdRuncardData[0]->id)
+            //         ->whereNull('stations.deleted_at')
+            //         ->get()->pluck('operator_name');
+
+            //         foreach ($test as $items) {
+            //             array_push($flattened_array, $items);
+            //         }
+            //         $flattened_array = array_unique($flattened_array);
+            //         $test1 = implode(',', $flattened_array);
+            //         return $test1;
+                    // return $test1;
+                    // return $test;
+            // $flattened = $test->flatten(0);
+            // return $flattened->all();
+            // $test2 = $test->map(fn ($json) => json_decode($json))
+            //               ->flatten()
+            //               ->unique();
+            // return $test2;
+
+            // $test1 = implode(',',(array) $test);
+            // $test2 = implode(',', $test->operator_name);
+            // foreach ($test as $key => $value) {
+            //     $value
+            // }
+            // foreach($device_details as $material_details){
+            //     $arr_material_codes[] = $material_details->material_code;
+            //     $arr_material_types[] = $material_details->material_type;
+            // }
+            // return $ProdRuncardData;
             return DataTables::of($ProdRuncardData)
             ->addColumn('action', function($row){
                 $result = '';
                 $result .= "<center>";
 
                 if($row->status == 0 || $row->status == 1 || $row->status == 3){
-                    $result .= "<button class='btn btn-success btn-sm mr-1' prod_runcard-id='".$row->id."' id='btnPrintProdRuncard'>
+                    if($row->status == 0){//Pending
+                        $btn_class = 'btn btn-primary';
+                    }else if($row->status == 1){//Submitted
+                        $btn_class = 'btn btn-primary';
+                    }else if($row->status == 3){//Done
+                        $btn_class = 'btn btn-success';
+                    }
+
+                    $result .= "<button class='".$btn_class." btn-sm mr-1' prod_runcard-id='".$row->id."' id='btnPrintProdRuncard'>
                                     <i class='fa-solid fa-print' disabled></i>
                                 </button>";
                 }
@@ -92,7 +154,23 @@ class ProductionRuncardController extends Controller
                 }
                 return $result;
             })
-            ->rawColumns(['action','status'])
+            ->addColumn('operator_names', function ($row){
+                $op_names_array = [];
+                $operator_name_per_runcard = DB::table('production_runcard_stations AS stations')
+                    ->select(DB::raw("CONCAT(users.firstname, ' ', users.lastname) AS operator_name"))
+                    ->join('users', 'stations.operator_name', '=', 'users.id')
+                    ->where('stations.prod_runcards_id', $row->id)
+                    ->whereNull('stations.deleted_at')
+                    ->get()->pluck('operator_name');
+
+                    foreach ($operator_name_per_runcard as $items) {
+                        array_push($op_names_array, $items);
+                    }
+                    $unique_op_names = array_unique($op_names_array);
+                    $all_operator_names = implode(', ', $unique_op_names);
+                return $all_operator_names;
+            })
+            ->rawColumns(['action','status','operator_names'])
             ->make(true);
         // }
     }
@@ -154,62 +232,79 @@ class ProductionRuncardController extends Controller
     }
 
     public function GetPOFromPPSDB(Request $request){
-        $po_details = DB::connection('mysql_rapid_pps')->select(' SELECT po_receive.ItemName AS part_name, po_receive.OrderNo AS po_number
+        if(isset($request->po_number)){
+            $andWhere = '';
+        }else{
+            $andWhere = 'AND po_receive.POBalance > 0';
+        }
+
+        $po_details = DB::connection('mysql_rapid_pps')->select(' SELECT po_receive.ItemName AS part_name, po_receive.OrderNo AS po_number, po_receive.POBalance AS po_quantity, po_receive.DateIssued AS received_date
                             FROM tbl_POReceived AS po_receive
-                            WHERE po_receive.ItemName = "'.$request->device_name.'" AND po_receive.POBalance > 0
+                            WHERE po_receive.ItemName = "'.$request->device_name.'"'.$andWhere.' ORDER BY po_receive.DateIssued DESC;
         ');
 
-        // return $po_details;
-
-        // if(isset($request->po_number)){
-        //     $po_details_test = $po_details->add('{"device_name": "CN176-16#MO", "po_number": "PR2410116399"}')->execute();
-        //     // $po_details_test = $po_details->map(function ($item){
-        //     //     $item = $request->device_name;
-        //     //     $item = $request->po_number;
-        //     //     // $item->ipqc_inspector_id = Auth::user()->id;
-        //     //     // $item->ipqc_inspector_name = Auth::user()->firstname.' '.Auth::user()->lastname;
-        //     //     return $item;
-        //     // });
-        // }else{
-        //     $po_details_test = $po_details;
-        // }
-
-        // return $po_details_test;
         return response()->json(['result' => 1, 'po_details' => $po_details]);
     }
 
     public function searchPoFromPpsDb(Request $request){
         $po_details = DB::connection('mysql_rapid_pps')
-        ->select(' SELECT po_receive.ItemName AS part_name, po_receive.ItemCode AS part_code, po_receive.OrderNo AS po_number, po_receive.OrderQty AS po_qty, dieset.DrawingNo AS drawing_no, dieset.Rev AS drawing_rev
+        ->select(' SELECT po_receive.ItemName AS part_name, po_receive.ItemCode AS part_code, po_receive.OrderNo AS po_number, po_receive.OrderQty AS order_quantity, dieset.DrawingNo AS drawing_no, dieset.Rev AS drawing_rev, dieset.DieNo AS dieset_no
             FROM tbl_POReceived AS po_receive
             LEFT JOIN tbl_dieset AS dieset ON po_receive.ItemCode = dieset.R3Code
             WHERE po_receive.OrderNo = "'.$request->po_number.'" AND po_receive.ItemName = "'.$request->device_name.'"
             ');
 
-        // return $po_details;
-        if(empty($po_details)){
+        $po_tll_output = DB::table('production_runcards AS runcard')
+                        ->select(DB::raw('SUM(runcard.shipment_output) as accume_ttl_output'))
+                        ->where('runcard.po_number', $request->po_number)
+                        ->whereNull('runcard.deleted_at')
+                        ->first();
 
-            $result = 1;
+        $po_balance = $po_details[0]->order_quantity - $po_tll_output->accume_ttl_output;
+
+        if(empty($po_details)){
+            $result = 0;
             $po_details = '';
             $acdcs_data = '';
-
         }else{
-            $exploded_device_name = explode("-",$po_details[0]->part_name);
-
-            // CLARK 09182024
-            $test = $exploded_device_name[0].'-'.$exploded_device_name[1];
-
-            $acdcs_data = DB::connection('mysql_rapid_acdcs')
-            ->select("SELECT DISTINCT `doc_no`,`doc_type`,`rev_no` FROM tbl_active_docs
-            WHERE `doc_type` = '".$request->doc_type."' AND `doc_title` LIKE '%".$test."%'");
-            // -- WHERE `doc_type` = '".$request->doc_type."' AND `doc_title` LIKE '%".$exploded_device_name[0]."%'");
-
-            $result = 0;
+            $result = 1;
             $po_details = $po_details[0];
-            $acdcs_data = $acdcs_data[0];
+            $acdcs_data = '';
+
+            if($po_details->drawing_no == '' || $po_details->drawing_rev == ''){
+                $exploded_device_name = explode("-",$po_details->part_name);
+                $concatted_device_name = $exploded_device_name[0].'-'.$exploded_device_name[1]; // CLARK 09182024
+
+                $acdcs_data = DB::connection('mysql_rapid_acdcs')
+                        ->select("SELECT DISTINCT `doc_no`,`doc_type`,`rev_no` FROM tbl_active_docs
+                        WHERE `doc_type` = '".$request->doc_type."' AND `doc_title` LIKE '%".$concatted_device_name."%' ORDER BY `rev_no` DESC"
+                );
+
+                if(!empty($acdcs_data)){
+                    $result = 2;
+                    $acdcs_data = $acdcs_data[0];
+                }
+            }
+
+            // $test = $exploded_device_name[1].'-'.$exploded_device_name[2]; // CLARK 09182024
+            // $test = $exploded_device_name[0];
+            // $test = $exploded_device_name[2];
+
+            // -- WHERE `doc_type` = '".$request->doc_type."' AND `doc_title` LIKE '%".$exploded_device_name[0]."%'");
+            // -- // -- WHERE `doc_title` LIKE '%".$test."%'");
+
+            // $result = 0;
+            // if(empty($acdcs_data)){
+            //     $result = 2;
+            //     $po_details = $po_details[0];
+            //     $acdcs_data = '';
+            // }else{
+            //     $po_details = $po_details[0];
+            //     $acdcs_data = $acdcs_data[0];
+            // }
         }
 
-        return response()->json(['result' => $result, 'acdcs_data' => $acdcs_data, 'po_details' => $po_details]);
+        return response()->json(['result' => $result, 'acdcs_data' => $acdcs_data, 'po_balance' => $po_balance, 'po_details' => $po_details]);
     }
 
     public function ValidateMatLotNumber(Request $request){
@@ -224,22 +319,22 @@ class ProductionRuncardController extends Controller
                                     LIMIT 1
                                 ');
 
+        // return $whs_material_name;
         if($whs_material_name != []){
         // return $whs_material_name;
         // dd($whs_material_name);
         // $whs_material_name != []
         // if(isset($whs_material_name[0])){
         // if($whs_material_name->isNotEmpty()){
-            $matrix_details = DB::connection('mysql')
-            ->table('material_processes')
-            ->join('devices', 'material_processes.device_id', '=', 'devices.id')
-            ->join('processes', 'material_processes.process', '=', 'processes.id')
-            ->join('material_process_materials', 'material_process_materials.mat_proc_id', '=', 'material_processes.id')
-            ->select('material_process_materials.material_type', 'material_process_materials.material_code', 'devices.code', 'devices.name', 'processes.process_name')
-            ->where('processes.process_name', 'Production Runcard')
-            ->where('devices.name', $request->device_name)
-            ->where('material_process_materials.material_type', $whs_material_name[0]->mat_name)
-            ->get();
+            $matrix_details = DB::connection('mysql')->table('material_processes')
+                            ->join('devices', 'material_processes.device_id', '=', 'devices.id')
+                            ->join('processes', 'material_processes.process', '=', 'processes.id')
+                            ->join('material_process_materials', 'material_process_materials.mat_proc_id', '=', 'material_processes.id')
+                            ->select('material_process_materials.material_type', 'material_process_materials.material_code', 'devices.code', 'devices.name', 'processes.process_name')
+                            ->where('processes.process_name', 'Production Runcard')
+                            ->where('devices.name', $request->device_name)
+                            ->where('material_process_materials.material_type', $whs_material_name[0]->mat_name)
+                            ->get();
         // }else{
             // $matrix_details = 'blank';
         // }
@@ -252,11 +347,10 @@ class ProductionRuncardController extends Controller
 
         // return $matrix_details;
         // return response()->json(['data' => $matrix_details]);
-
         return response()->json(['result' => 0, 'material_class' => $whs_material_name, 'matrix_data' => $matrix_details ]);
     }
 
-    public function addProdRuncardData(Request $request){
+    public function addProdRuncardData(Request $request){ //CheckExistingStations
         date_default_timezone_set('Asia/Manila');
         $data = $request->all();
           // return $data;
@@ -278,10 +372,10 @@ class ProductionRuncardController extends Controller
             $arr_material_types[] = $material_details->material_type;
         }
 
-        if(in_array('LAPEROS',$arr_material_types) && in_array('CT',$arr_material_types) && in_array('ME',$arr_material_types)){
-            $validate_array = ['po_number' => 'required', 'production_lot_time' => 'required', 'material_lot' => 'required', 'contact_mat_lot' => 'required', 'me_mat_lot' => 'required'];
+        if(in_array('CT',$arr_material_types) && in_array('ME',$arr_material_types)){
+            $validate_array = ['po_number' => 'required', 'production_lot_time' => 'required', 'machine_number' => 'required', 'material_lot' => 'required', 'contact_mat_lot' => 'required', 'me_mat_lot' => 'required'];
         }else{
-            $validate_array = ['po_number' => 'required', 'production_lot_time' => 'required', 'material_lot' => 'required'];
+            $validate_array = ['po_number' => 'required', 'production_lot_time' => 'required', 'machine_number' => 'required', 'material_lot' => 'required'];
         }
 
         // $required_material_codes = implode(',',$arr_material_codes);
@@ -307,6 +401,7 @@ class ProductionRuncardController extends Controller
                                     'po_number'       => $request->po_number,
                                     'po_quantity'     => $request->po_quantity,
                                     'required_qty'    => $request->required_output,
+                                    'machine_no'      => $request->machine_number,
                                     'production_lot'  => $request->production_lot,
                                     'shipment_output' => $request->shipment_output,
                                     'drawing_no'      => $request->drawing_no,
@@ -332,34 +427,72 @@ class ProductionRuncardController extends Controller
                     DB::commit();
                     return response()->json(['result' => 1]);
                 }else{
-                    ProductionRuncard::where('id', $request->prod_runcard_id)
-                            ->update([
-                                    'part_name'       => $request->part_name,
-                                    'part_code'       => $request->part_code,
-                                    'po_number'       => $request->po_number,
-                                    'po_quantity'     => $request->po_quantity,
-                                    'required_qty'    => $request->required_output,
-                                    'production_lot'  => $request->production_lot,
-                                    'shipment_output' => $request->shipment_output,
-                                    'drawing_no'      => $request->drawing_no,
-                                    'drawing_rev'     => $request->drawing_rev,
-                                    'material_name'   => $request->material_name,
-                                    'material_lot'    => $request->material_lot,
-                                    'material_qty'    => $request->material_qty,
-                                    'contact_name'    => $request->contact_mat_name,
-                                    'contact_lot'     => $request->contact_mat_lot,
-                                    'contact_qty'     => $request->contact_mat_qty,
-                                    'me_name'         => $request->me_mat_name,
-                                    'me_lot'          => $request->me_mat_lot,
-                                    'me_qty'          => $request->me_mat_qty,
-                                    'ud_ptnr_no'      => $request->ud_ptnr_no,
-                                    'sar_no'          => $request->sar_no,
-                                    'aer_no'          => $request->aer_no,
-                                    'created_by'      => Auth::user()->id,
-                                    'last_updated_by' => Auth::user()->id,
-                                    'created_at'      => date('Y-m-d H:i:s'),
-                                    'updated_at'      => date('Y-m-d H:i:s')
-                            ]);
+                    $data = [
+                        'part_name'       => $request->part_name,
+                        'part_code'       => $request->part_code,
+                        'po_number'       => $request->po_number,
+                        'po_quantity'     => $request->po_quantity,
+                        'required_qty'    => $request->required_output,
+                        'machine_no'      => $request->machine_number,
+                        'shipment_output' => $request->shipment_output,
+                        'drawing_no'      => $request->drawing_no,
+                        'drawing_rev'     => $request->drawing_rev,
+                        'material_name'   => $request->material_name,
+                        'material_lot'    => $request->material_lot,
+                        'material_qty'    => $request->material_qty,
+                        'contact_name'    => $request->contact_mat_name,
+                        'contact_lot'     => $request->contact_mat_lot,
+                        'contact_qty'     => $request->contact_mat_qty,
+                        'me_name'         => $request->me_mat_name,
+                        'me_lot'          => $request->me_mat_lot,
+                        'me_qty'          => $request->me_mat_qty,
+                        'ud_ptnr_no'      => $request->ud_ptnr_no,
+                        'sar_no'          => $request->sar_no,
+                        'aer_no'          => $request->aer_no,
+                        'created_by'      => Auth::user()->id,
+                        'last_updated_by' => Auth::user()->id,
+                        'created_at'      => now(),
+                        'updated_at'      => now(),
+                    ];
+
+                    // ✅ Conditionally add the field
+                    if(Auth::user()->user_level_id == 1) {
+                        $data['production_lot'] = $request->production_lot;
+                    }
+
+                    // Then update
+                    ProductionRuncard::where('id', $request->prod_runcard_id)->update($data);
+
+                    // old code
+                    // ProductionRuncard::where('id', $request->prod_runcard_id)
+                    //         ->update([
+                    //                 'part_name'       => $request->part_name,
+                    //                 'part_code'       => $request->part_code,
+                    //                 'po_number'       => $request->po_number,
+                    //                 'po_quantity'     => $request->po_quantity,
+                    //                 'required_qty'    => $request->required_output,
+                    //                 'machine_no'      => $request->machine_number,
+                    //                 'production_lot'  => $request->production_lot,
+                    //                 'shipment_output' => $request->shipment_output,
+                    //                 'drawing_no'      => $request->drawing_no,
+                    //                 'drawing_rev'     => $request->drawing_rev,
+                    //                 'material_name'   => $request->material_name,
+                    //                 'material_lot'    => $request->material_lot,
+                    //                 'material_qty'    => $request->material_qty,
+                    //                 'contact_name'    => $request->contact_mat_name,
+                    //                 'contact_lot'     => $request->contact_mat_lot,
+                    //                 'contact_qty'     => $request->contact_mat_qty,
+                    //                 'me_name'         => $request->me_mat_name,
+                    //                 'me_lot'          => $request->me_mat_lot,
+                    //                 'me_qty'          => $request->me_mat_qty,
+                    //                 'ud_ptnr_no'      => $request->ud_ptnr_no,
+                    //                 'sar_no'          => $request->sar_no,
+                    //                 'aer_no'          => $request->aer_no,
+                    //                 'created_by'      => Auth::user()->id,
+                    //                 'last_updated_by' => Auth::user()->id,
+                    //                 'created_at'      => date('Y-m-d H:i:s'),
+                    //                 'updated_at'      => date('Y-m-d H:i:s')
+                    //         ]);
 
                     DB::commit();
                     return response()->json(['result' => 1]);
@@ -392,51 +525,15 @@ class ProductionRuncardController extends Controller
                                                         'stations.ng_quantity AS station_ng_qty',
                                                         'stations.output_quantity AS station_output_qty',
                                                         'stations.remarks AS station_remarks',
-                                                        'stations.plastic_injection_machine_no AS station_plastic_injection_machine_no',
-                                                        'stations.visual_insp_actual_sample AS station_visual_insp_actual_sample',
-                                                        'stations.sorting_guaranteed_from AS station_sorting_guaranteed_from',
-                                                        'stations.sorting_problem AS station_sorting_problem',
-                                                        'stations.sorting_document_no AS station_sorting_document_no',
-                                                        'stations.oqc_lot_qty AS station_oqc_lot_qty',
-                                                        'stations.packing_prod_stamp AS station_packing_prod_stamp',
+                                                        'stations.machine_no_annealing AS station_machine_no_annealing',
+                                                        'stations.type_annealing AS station_type_annealing',
+                                                        'stations.sampling_annealing AS station_sampling_annealing',
+                                                        'stations.sampling_result_annealing AS station_sampling_result_annealing',
                                                         'stations.status AS station_status',
                                                         'stations.deleted_at AS station_deleted_at')
                                             ->where('stations.id', $request->prod_runcard_station_id)
                                             ->whereNull('stations.deleted_at');
                             })->get();
-
-        // return $prod_runcard_data;
-        // return json_encode($prod_runcard_data);
-        // $prod_runcard_data = DB::connection('mysql')->select("SELECT *
-        //                 FROM production_runcards AS runcard
-        //                 LEFT JOIN production_runcard_stations AS station ON runcard.id = station.prod_runcards_id
-        //                 LEFT JOIN users AS station_user ON station.operator_name = station_user.id
-        //                 WHERE runcard.id = '$request->prod_runcard_id'
-        //                 WHEN station.prod_runcards_id = '$request->prod_runcard_station_id';
-        //                 --  AND station.prod_runcards_id = '$request->prod_runcard_station_id'
-        //                 -- ORDER BY runcard_station.station_step ASC
-
-        //     ");
-
-        // $prod_runcard_data = ProductionRuncard::with(['assembly_runcard_station.station_name' ,'assembly_runcard_station.user'])
-        //                                         ->when($request->assy_runcard_station_id, function ($station_query) use ($request){
-        //                                             return $station_query ->with(['assembly_runcard_station' => function($station_id_query) use ($request){
-        //                                                 return $station_id_query->where('id', $request->assy_runcard_station_id);
-        //                                             }]);
-        //                                         })
-        //                                         ->whereNull('deleted_at')
-        //                                         ->when($request->assy_runcard_id, function ($query) use ($request){
-        //                                                 return $query ->where('id', $request->assy_runcard_id);
-        //                                         })
-        //                                         ->when($request->po_number, function ($query) use ($request){
-        //                                                 return $query ->where('po_number', $request->po_number);
-        //                                         })
-        //                                         ->get();
-
-        // $prod_runcard_data = ProductionRuncard::whereNull('deleted_at')
-        //                                         ->when($request->prod_runcard_id, function ($query) use ($request){
-        //                                                 return $query ->where('id', $request->prod_runcard_id);
-        //                                         })->get();
 
         if(isset($request->prod_runcard_station_id)){
             $mode_of_defect_data =  ProductionRuncardStationMod::with(['mode_of_defect'])->where('prod_runcard_stations_id', $request->prod_runcard_station_id)
@@ -452,63 +549,61 @@ class ProductionRuncardController extends Controller
 
     public function addProdRuncardStationData(Request $request){
         date_default_timezone_set('Asia/Manila');
-        $data = $request->all();
-        // return $data;
-
-        // $validator = Validator::make($data, [
-        //     'runcard_station' => 'required'
-        // ]);
-
-        // if($request->runcard_station == 4){ //Lubricant Coating
-        //     $validate_array = ['runcard_station' => 'required', 'p_zero_two_prod_lot' => 'required'];
-        // }else if($request->runcard_station == 5){//Lot Marking
-        //     $validate_array = ['runcard_station' => 'required', 's_zero_seven_prod_lot' => 'required', 's_zero_two_prod_lot' => 'required'];
-        // }else if($request->runcard_station == 6){//Visual Inspection
-        //     $validate_array = ['runcard_station' => 'required', ];
-        // }
-
-        // $validator = Validator::make($data, $validate_array);
-
-        // if ($validator->fails()) {
-        //     return response()->json(['validation' => 'hasError', 'error' => $validator->messages()]);
-        // }else {
-
-
+        // return $data = $request->all();
             try{
+                date_default_timezone_set('Asia/Manila');
+                DB::beginTransaction();
+                $device_name = $request->device_name;
+                $material_processes_by_device_name = DB::connection('mysql')
+                ->select("  SELECT material_processes.step,material_process_stations.cert_opt
+                            FROM material_processes
+                            INNER JOIN devices ON devices.id = material_processes.device_id
+                            INNER JOIN material_process_stations ON material_process_stations.mat_proc_id = material_processes.id
+                            INNER JOIN stations ON stations.id = material_process_stations.station_id
+                            WHERE 1=1
+                            AND devices.name = '".$device_name."'
+                            AND stations.id = $request->runcard_station
+                            AND material_processes.status = 0
+                ");
+                //Validate the certified operator
+                $arr_cert_opt = explode(',',$material_processes_by_device_name[0]->cert_opt);
+                    if(!in_array(Auth::user()->id,  $arr_cert_opt)){
+                        DB::rollback();
+                        return response()->json([
+                            "result" => 0,
+                            "error_msg" => "Operator is NOT CERTIFIED ! Please check the matrix. !",
+                        ]);
+                    }
                 if(!isset($request->frmstations_runcard_station_id)){
                     if(ProductionRuncardStation::where('prod_runcards_id', $request->frmstations_runcard_id)->where('station', $request->runcard_station)->where('sub_station', $request->runcard_sub_station)->exists()){
                         return response()->json(['result' => 2]);
                     }else{
                         $prod_runcard_station_id = ProductionRuncardStation::insertGetId([
-                                            'prod_runcards_id'             => $request->frmstations_runcard_id,
-                                            'station'                      => $request->runcard_station,
-                                            'station_step'                 => $request->step,
-                                            'sub_station'                  => $request->runcard_sub_station,
-                                            'sub_station_step'             => $request->sub_station_step,
-                                            'date'                         => $request->date,
-                                            'operator_name'                => Auth::user()->id,
-                                            'input_quantity'               => $request->input_qty,
-                                            'ng_quantity'                  => $request->ng_qty,
-                                            'output_quantity'              => $request->output_qty,
-                                            'remarks'                      => $request->remarks,
-                                            'plastic_injection_machine_no' => $request->s1_machine_no,
-                                            'visual_insp_actual_sample'    => $request->s3_actual_sample,
-                                            'sorting_guaranteed_from'      => $request->s4a_guaranteed_from,
-                                            'sorting_problem'              => $request->s4a_problem,
-                                            'sorting_document_no'          => $request->s4a_document_no,
-                                            'oqc_lot_qty'                  => $request->s4_lot_qty,
-                                            'packing_prod_stamp'           => $request->s5_prod_stamp,
-                                            // 'mode_of_defect'               => $request->mode_of_defect,
-                                            // 'defect_qty'                   => $request->defect_quantity,
-                                            'created_by'                   => Auth::user()->id,
-                                            'last_updated_by'              => Auth::user()->id,
-                                            'created_at'                   => date('Y-m-d H:i:s'),
-                                            'updated_at'                   => date('Y-m-d H:i:s'),
+                            'prod_runcards_id'             => $request->frmstations_runcard_id,
+                            'station'                      => $request->runcard_station,
+                            'station_step'                 => $request->step,
+                            'sub_station'                  => $request->runcard_sub_station,
+                            'sub_station_step'             => $request->sub_station_step,
+                            'date'                         => $request->date,
+                            'operator_name'                => Auth::user()->id,
+                            'input_quantity'               => $request->input_qty,
+                            'ng_quantity'                  => $request->ng_qty,
+                            'output_quantity'              => $request->output_qty,
+                            'remarks'                      => $request->remarks,
+                            'machine_no_annealing'         => $request->annealing_machine_no,
+                            'type_annealing'               => $request->type_annealing,
+                            'sampling_annealing'           => $request->sampling_annealing,
+                            'sampling_result_annealing'    => $request->sampling_result,
+                            'created_by'                   => Auth::user()->id,
+                            'last_updated_by'              => Auth::user()->id,
+                            'created_at'                   => date('Y-m-d H:i:s'),
+                            'updated_at'                   => date('Y-m-d H:i:s'),
                         ]);
 
                         ProductionRuncard::where('id', $request->frmstations_runcard_id)
                             ->update([
                                     'shipment_output'  => $request->output_qty,
+                                    'last_updated_by'  => Auth::user()->id,
                             ]);
                     }
                 }else{
@@ -524,15 +619,10 @@ class ProductionRuncardController extends Controller
                             'ng_quantity'                  => $request->ng_qty,
                             'output_quantity'              => $request->output_qty,
                             'remarks'                      => $request->remarks,
-                            'plastic_injection_machine_no' => $request->s1_machine_no,
-                            'visual_insp_actual_sample'    => $request->s3_actual_sample,
-                            'sorting_guaranteed_from'      => $request->s4a_guaranteed_from,
-                            'sorting_problem'              => $request->s4a_problem,
-                            'sorting_document_no'          => $request->s4a_document_no,
-                            'oqc_lot_qty'                  => $request->s4_lot_qty,
-                            'packing_prod_stamp'           => $request->s5_prod_stamp,
-                            // 'mode_of_defect'               => $request->mode_of_defect,
-                            // 'defect_qty'                   => $request->defect_quantity,
+                            'machine_no_annealing'         => $request->annealing_machine_no,
+                            'type_annealing'               => $request->type_annealing,
+                            'sampling_annealing'           => $request->sampling_annealing,
+                            'sampling_result_annealing'    => $request->sampling_result,
                             'last_updated_by'              => Auth::user()->id,
                             'updated_at'                   => date('Y-m-d H:i:s'),
                         ]);
@@ -540,37 +630,8 @@ class ProductionRuncardController extends Controller
                     ProductionRuncard::where('id', $request->frmstations_runcard_id)
                         ->update([
                                 'shipment_output'  => $request->output_qty,
+                                'last_updated_by'  => Auth::user()->id,
                         ]);
-
-                    // if($request->step == '2' && $request->sub_station_step == '2'){
-                    //     QualificationDetail::insert([
-                    //         'prod_runcard_station_id'     => $request->frmstations_runcard_station_id,
-                    //         'station'                     => $request->runcard_station,
-                    //         'station_step'                => $request->step,
-                    //         'prod_actual_sample_result'   => $request->quali_prod_judgement,
-                    //         'prod_actual_sample_used'     => $request->quali_prod_actual_sample,
-                    //         'prod_actual_sample_remarks'  => $request->quali_prod_remarks,
-                    //         'created_by'                  => Auth::user()->id,
-                    //         'last_updated_by'             => Auth::user()->id,
-                    //         'created_at'                  => date('Y-m-d H:i:s'),
-                    //         'updated_at'                  => date('Y-m-d H:i:s')
-                    //     ]);
-                    // }else if($request->step == '2' && $request->sub_station_step == '3'){
-                    //     QualificationDetail::where('id', $request->frmstations_runcard_id)->update([
-                    //         'qc_actual_sample_result'     => $request->quali_qc_judgement,
-                    //         'qc_actual_sample_used'       => $request->quali_qc_actual_sample,
-                    //         'qc_actual_sample_remarks'    => $request->quali_qc_remarks,
-                    //         'qc_ct_height_data'           => $request->ct_height_data_qc,
-                    //         'engr_ct_height_data'         => $request->ct_height_data_engr,
-                    //         'engr_ct_height_data_remarks' => $request->ct_height_data_remarks,
-                    //         'defect_checkpoints'          => $defect_checkpoint,
-                    //         'defect_remarks'              => $request->defect_checkpoint_remarks,
-                    //         'created_by'                  => Auth::user()->id,
-                    //         'last_updated_by'             => Auth::user()->id,
-                    //         'created_at'                  => date('Y-m-d H:i:s'),
-                    //         'updated_at'                  => date('Y-m-d H:i:s')
-                    //     ]);
-                    // }
                 }
 
                 if(isset($request->frmstations_runcard_station_id)){
@@ -602,9 +663,11 @@ class ProductionRuncardController extends Controller
                     }
 
                 // return response()->json(['result' => 1, 'station' => $request->runcard_station,  'shipment_output' => $request->output_qty]);
+                DB::commit();
                 return response()->json(['result' => 1]);
             } catch (\Throwable $th) {
-                return $th;
+                DB::rollback();
+                throw $th;
             }
         // }
     }
@@ -652,7 +715,23 @@ class ProductionRuncardController extends Controller
     }
 
     public function CheckExistingStations(Request $request){
-        $prod_runcard_details = ProductionRuncard::with('device_details.material_process', 'runcard_station')->where('id', $request->runcard_id)->first();
+    $prod_runcard_details = ProductionRuncard::with('device_details.material_process.station_details.stations', 'runcard_station')->where('id', $request->runcard_id)->whereNull('deleted_at')->first();
+
+        // **CHECK IF ANNEALING IS IN MATERIAL PROCESS
+        $is_annealing_station_exist = 'False';
+        foreach($prod_runcard_details->device_details->material_process as $process){
+            $stations = $process->station_details[0]->stations;
+            if($stations->station_name == 'Annealing' && $process->status == 0) {
+                $is_annealing_station_exist = 'True';
+                break; // Exit all loops once we find the station
+            }
+        }
+
+        //** CHECK IF THERE IS UD_PTNR_NO
+        $is_ud_ptnr_no_exist = 'False';
+        if(isset($prod_runcard_details->ud_ptnr_no)){
+            $is_ud_ptnr_no_exist = 'True';
+        }
 
         $count_of_steps = count($prod_runcard_details->device_details->material_process);
         $count_of_existing_station = count($prod_runcard_details->runcard_station);
@@ -665,49 +744,62 @@ class ProductionRuncardController extends Controller
             $previous_station_step = 0;
             $previous_sub_station_step = 0;
         }
-        // return $count_of_existing_station = count($prod_runcard_details->runcard_station);
-        // ->orderBy('id', 'DESC')
 
-        // $mat_process_steps = [];
-        // foreach ($prod_runcard_details->device_details->material_process as $processes){
-        //     $mat_process_steps[] = $processes->step;
-        // }
-
-        // $existing_station = ProductionRuncardStation::whereNull('deleted_at')->where('prod_runcards_id', $request->runcard_id)->get();
-        // $steps = [];
-        // foreach ($existing_station as $station){
-        //     $steps[] = $station->station_step;
-        // }
-        // $mat_process_steps[] = $steps;
-
-        // $last_station = ProductionRuncardStation::whereNull('deleted_at')->where('prod_runcards_id', $request->runcard_id)->orderBy('id', 'DESC')->first();
-
-        // return $mat_process_steps;
-        // return $steps;
-        // situation #1 CN171P UPTO STEP 2 ONLY
-        // situation #2 CN171S UPTO STEP 3
-        // $current_step = 0;
-
-        $ud_ptnr = 0;
-        if($prod_runcard_details->ud_ptnr_no != ''){
-            $ud_ptnr = 1;
-        }
-        // return $ud_ptnr;
         $current_step = 0;
         $output_quantity = 0;
-
-        // $previous_station_step = 1;
-
-        // CLARK COMMENT TO SKIP FINISHING STATION DUE TO NO PTNR DOCUMENT
         $toadd = 0;
         $tominus = 0;
-        if($ud_ptnr == 0 && $previous_station_step == 1){ //if previous station is injection and there is no ud/ptnr, skip to visual inspection
-            $toadd = 1; //proceed to next station
-        }else if($ud_ptnr == 1 && $previous_station_step == 2 && $previous_sub_station_step == 2){ //if previous station is finishing and sub station is production, stay in current station and proceed to next substation
-            $tominus = 1; //stay in current station
-        }else if($previous_station_step == 3 && $previous_sub_station_step == 4){ //if previous station is visual inspection and sub station is airblowing, stay in current station and proceed to next substation
-            $tominus = 1; //stay in current station
+
+        if($is_ud_ptnr_no_exist == 'False' && $is_annealing_station_exist == 'False'){ // **W/O ANNEALING & UD
+            // return 'true';
+            if($previous_station_step == 1){
+                $toadd = 1; //skip 1 substation
+            }else if($previous_station_step == 3 && $previous_sub_station_step == 5){
+                $tominus = 1; //stay to current station
+            }
+        }else if($is_ud_ptnr_no_exist == 'True' && $is_annealing_station_exist == 'True'){// **WITH ANNEALING & UD
+            $toadd = 0;
+            // return 'true';
+            if($previous_station_step == 3 && $previous_sub_station_step == 3){// **FINISHING SEGREGATION
+                $tominus = 1;
+            }else if($previous_station_step == 4 && $previous_sub_station_step == 5){
+                $tominus = 1; //skip 1 station
+            }
+        }else if($is_ud_ptnr_no_exist == 'True' && $is_annealing_station_exist == 'False'){ // **W/O ANNEALING BUT W/ UD
+            // return 'true';
+            if($previous_station_step == 1){
+                $toadd = 0;
+            }else if($previous_station_step == 2 && $previous_sub_station_step == 3){
+                $tominus = 1;
+            }else if($previous_station_step == 3 && $previous_sub_station_step == 5){
+                $tominus = 1;
+            }
+        }else if($is_ud_ptnr_no_exist == 'False' && $is_annealing_station_exist == 'True'){ // **W/ ANNEALING BUT W/O UD
+            $toadd = 0;
+            if($previous_station_step == 2){// **FOR VISUAL AIRBLOWING
+                $toadd = 1; //skip 1 station
+            }else if($previous_station_step == 4 && $previous_sub_station_step == 5){ // **FOR VISUAL VISUAL
+                $tominus = 1; //stay to current station
+            }
         }
+
+        //CLARK COMMENT 01/08/2025 Old Code
+        // $ud_ptnr = 0; //No UD Document
+        // if($prod_runcard_details->ud_ptnr_no != ''){
+        //     $ud_ptnr = 1; //UD Document exist
+        // }
+
+        // $previous_station_step <= 2 is for checking if previous status is injection or annealing
+        // if($ud_ptnr == 0 && ($previous_station_step == 1 || $previous_station_step == 2)){ //if previous station is  injection(step 1) and there is no ud/ptnr, skip to visual inspection
+        //     $toadd = 1; //proceed to next station
+        // }else if($ud_ptnr == 1 && ($previous_station_step == 1 || $previous_station_step == 2) && $previous_sub_station_step == 2){ //if previous station is finishing and sub station is production, stay in current station and proceed to next substation
+        //     $tominus = 1; //stay in current station
+        // }else if($ud_ptnr == 1 && ($previous_station_step == 2 || $previous_station_step == 3) && $previous_sub_station_step == 3){ //if previous station is finishing and sub station is production, stay in current station and proceed to next substation
+        //     $tominus = 1; //stay in current station
+        // }else if(($previous_station_step == 3 || $previous_station_step == 4) && $previous_sub_station_step == 5){ //if previous station is visual inspection and sub station is airblowing, stay in current station and proceed to next substation
+        //     $tominus = 1; //stay in current station
+        // }
+        //CLARK COMMENT 01/08/2025 Old Code
 
         $previous_station_step = ($previous_station_step + $toadd) - $tominus;
 
@@ -729,52 +821,45 @@ class ProductionRuncardController extends Controller
             }
         }
 
-        // if(in_array($steps, $mat_process_steps)){
-        //     // return 'dito';
-        //     if(count($steps) < count($mat_process_steps) - 1){
-        //         $current_step = count($steps)+1;
+        $ipqc_status = DB::table('qualification_details AS quali')->select('quali.id', 'runcard.po_number', 'runcard.production_lot', 'runcard.part_name')
+                            ->leftJoin('production_runcards AS runcard', 'quali.fk_prod_runcard_id', '=', 'runcard.id')
+                            ->where('runcard.po_number', $prod_runcard_details->po_number)
+                            ->where('runcard.production_lot', $prod_runcard_details->production_lot)
+                            ->where('runcard.part_name', $prod_runcard_details->part_name)
+                            ->whereNull('runcard.deleted_at')
+                            ->where('quali.logdel', 0)
+                            ->get();
 
-        //         // CLARK COMMENT TO SKIP FINISHING STATION DUE TO NO PTNR DOCUMENT
-        //         if($ud_ptnr == 0 && $current_step == 2){ //if current station is finishing skip to visual inspection
-        //             $current_step+= 1;
-        //         }else if($ud_ptnr == 1 && $current_step == 3){ //if current station is finishing is not yet finished
-        //             $current_step-= 1;
-        //         }
+        if(count($ipqc_status) > 0){
+            $btn_attr = 'true';
+        }else{
+            $btn_attr = 'false';
+        }
 
-        //         $output_qty = ProductionRuncardStation::whereNull('deleted_at')
-        //                                                 ->where('prod_runcards_id', $request->runcard_id)
-        //                                                 ->where('station_step', count($steps))
-        //                                                 ->first();
-
-        //         if(isset($output_qty->output_quantity)){
-        //             $output_quantity = $output_qty->output_quantity;
-        //         }else{
-        //             $output_quantity = '';
-        //         }
-        //     }
-        //     // else{
-        //     //     $current_step = 0; //END STATION STEP
-        //     //     $output_quantity = '';
-        //     // }
-        // }else{
-        //     $current_step = 1; //END STATION STEP
-        //     $output_quantity = '';
-        // }
-
-        // return $test->status;
-        // return $test->station_step;
-        // return $test->sub_station_step;
-
-        return response()->json(['count_of_existing_station' => $count_of_existing_station, 'count_of_steps' => $count_of_steps, 'current_step' => $current_step, 'output_quantity' => $output_quantity, 'previous_station_step' => $previous_station_step, 'ud_ptnr' => $ud_ptnr]);
+        return response()->json(['count_of_existing_station' => $count_of_existing_station, 'count_of_steps' => $count_of_steps, 'current_step' => $current_step, 'output_quantity' => $output_quantity, 'previous_station_step' => $previous_station_step, 'ud_ptnr' => $is_ud_ptnr_no_exist, 'existing_ipqc' => $btn_attr]);
         // return response()->json(['current_step' => $current_step, 'output_quantity' => $output_quantity]);
     }
 
     public function CheckExistingSubStations(Request $request){
-        // $prod_runcard_details = ProductionRuncard::with('device_details.material_process')->where('id', $request->runcard_id)->first();
+        $prod_runcard_details = ProductionRuncard::with('device_details.material_process.station_details.stations', 'runcard_station')->where('id', $request->runcard_id)->whereNull('deleted_at')->first();
 
-        $prod_runcard_details = ProductionRuncard::with('device_details.material_process', 'runcard_station')->where('id', $request->runcard_id)->first();
-        $sub_station_array = [1,2,3,4,5];
+        // **CHECK IF ANNEALING IS IN MATERIAL PROCESS
+        $is_annealing_station_exist = 'False';
+        foreach($prod_runcard_details->device_details->material_process as $process){
+            $stations = $process->station_details[0]->stations;
+            if ($stations->station_name == 'Annealing' && $process->status == 0){
+                $is_annealing_station_exist = 'True';
+                break; // Exit all loops once we find the station
+            }
+        }
 
+        //** CHECK IF THERE IS UD_PTNR_NO
+        $is_ud_ptnr_no_exist = 'False';
+        if(isset($prod_runcard_details->ud_ptnr_no)){
+            $is_ud_ptnr_no_exist = 'True';
+        }
+
+        $sub_station_array = [1,2,3,4,5,6];
         $count_of_steps = count($sub_station_array);
         $count_of_existing_station = count($prod_runcard_details->runcard_station);
 
@@ -787,74 +872,27 @@ class ProductionRuncardController extends Controller
             $previous_sub_station_step = 0;
         }
 
-        // return $previous_sub_station_step;
-
-        $ud_ptnr = 0;
-        if($prod_runcard_details->ud_ptnr_no != ''){
-            $ud_ptnr = 1;
-        }
-
-        // // return $test;
-        // $mat_process_steps = [];
-        // foreach ($prod_runcard_details->device_details->material_process as $processes){
-        //     $mat_process_steps[] = $processes->step;
-        // }
-
         $current_step = 0;
         $toadd = 0;
         $tominus = 0;
-        if($ud_ptnr == 0 && $previous_station_step == 1){ //if current station is finishing skip to visual inspection
+
+        if($is_ud_ptnr_no_exist == 'False' && $is_annealing_station_exist == 'False' && $previous_station_step == 1){ //if current station is finishing skip to visual inspection
+            $toadd = 3;
+        }else if($is_ud_ptnr_no_exist == 'True' && $is_annealing_station_exist == 'True' && $previous_station_step == 1){
+            $toadd = 0;
+        }else if($is_ud_ptnr_no_exist == 'True' && $is_annealing_station_exist == 'False' && $previous_station_step == 1){
+            $toadd = 1;
+        }else if($is_ud_ptnr_no_exist == 'False' && $is_annealing_station_exist == 'True' && $previous_station_step == 2){
             $toadd = 2;
-        }else if($ud_ptnr == 1 && $previous_station_step == 2 && $previous_sub_station_step == 3){ //if last station is finishing and sub station is production
-            $toadd = 1;
-        }else if($previous_station_step == 3 && $previous_sub_station_step == 4){
-            $toadd = 1;
-        }
-        $previous_station_step = $previous_station_step + $toadd;
-
-        if($previous_station_step < $count_of_steps){
-            $current_step = $previous_station_step + 1;
         }
 
-        // $existing_station = ProductionRuncardStation::whereNull('deleted_at')->where('prod_runcards_id', $request->runcard_id)->get();
-        // $steps = [];
-        // foreach ($existing_station as $station){
-        //     $steps[] = $station->sub_station;
-        // }
-        // $sub_station_array[] = $steps;
+        $previous_sub_station_step = $previous_sub_station_step + $toadd;
 
-        // return $sub_station_array;
-        // return $steps;
-        // situation #1 CN171P UPTO STEP 2 ONLY
-        // situation #2 CN171S UPTO STEP 3
-        // $current_step = 0;
-        // if(in_array($steps, $sub_station_array)){
-        //     if(count($steps) < count($sub_station_array) - 1){
-        //         $current_step = count($steps)+1;
+        if($previous_sub_station_step < $count_of_steps){
+            $current_step = $previous_sub_station_step + 1;
+        }
 
-        //         // CLARK COMMENT TO SKIP FINISHING STATION DUE TO NO PTNR DOCUMENT
-        //         if($ud_ptnr == 0 && $current_step == 2){
-        //             $current_step+= 2;
-        //         }
-        //         // $output_qty = ProductionRuncardStation::whereNull('deleted_at')->where('prod_runcards_id', $request->runcard_id)->where('station_step', count($steps))->first();
-
-        //         // if(isset($output_qty->output_quantity)){
-        //         //     $output_quantity = $output_qty->output_quantity;
-        //         // }else{
-        //         //     $output_quantity = '';
-        //         // }
-        //     }else{
-        //         $current_step = 0; //END STATION STEP
-        //         // $output_quantity = '';
-        //     }
-        // }else{
-        //     $current_step = 1; //END STATION STEP
-        //     // $output_quantity = '';
-        // }
-
-        // return response()->json(['current_step' => $current_step, 'output_quantity' => $output_quantity]);
-        // return response()->json(['current_step' => $current_step]);
-        return response()->json(['count_of_existing_station' => $count_of_existing_station, 'count_of_steps' => $count_of_steps, 'current_step' => $current_step, 'previous_station_step' => $previous_station_step, 'ud_ptnr' => $ud_ptnr]);
+        return response()->json(['count_of_existing_station' => $count_of_existing_station, 'count_of_steps' => $count_of_steps, 'current_step' => $current_step, 'previous_station_step' => $previous_sub_station_step, 'ud_ptnr' => $is_ud_ptnr_no_exist]);
     }
 
     public function GetMatrixDataByDevice(Request $request){
@@ -869,14 +907,30 @@ class ProductionRuncardController extends Controller
         ->where('status', 1)
         ->get();
 
-        foreach($matrix_data[0]->material_process[0]->material_details as $material_details){
-            $material_name[] = $material_details->material_type;
-            $material_code[] = $material_details->material_code;
-            $test = DB::connection('mysql_rapid_pps')
-                                ->select('SELECT whs.Classification AS class_id
-                                        FROM tbl_Warehouse AS whs WHERE whs.MaterialType = "'.$material_details->material_type.'" LIMIT 1
-                                    ');
-            $material_class[] = $test[0]->class_id;
+        // return get_object_vars($matrix_data[0]);
+        if(count($matrix_data[0]->material_process) > 0){
+            // return 'true';
+            foreach($matrix_data[0]->material_process[0]->material_details as $material_details){
+                $material_name[] = $material_details->material_type;
+                $material_code[] = $material_details->material_code;
+                $test = DB::connection('mysql_rapid_pps')
+                                    ->select('SELECT whs.Classification AS class_id
+                                            FROM tbl_Warehouse AS whs WHERE whs.MaterialType = "'.$material_details->material_type.'" LIMIT 1
+                                        ');
+                $material_class[] = $test[0]->class_id;
+            }
+
+            $material_type = implode(',',$material_name);
+            $material_codes = implode(',',$material_code);
+            $material_class = implode(',',$material_class);
+
+            $station_details = $matrix_data[0]->material_process[0]->station_details;
+
+            return response()->json(['device_details' => $matrix_data, 'material_details' => $material_type, 'material_codes' => $material_codes, 'material_class' => $material_class]);
+        }else{
+            // return 'false';
+            return response()->json(['device_details' => 0, 'material_details' => 0]);
+            // return response()->json(['device_details' => $matrix_data, 'material_details' => $material_type, 'material_codes' => $material_codes, 'material_class' => $material_class]);
         }
 
         // return $material_name;
@@ -891,19 +945,13 @@ class ProductionRuncardController extends Controller
         //     ');
         // return $matrix_data;
 
-
-        $material_type = implode(',',$material_name);
-        $material_codes = implode(',',$material_code);
-        $material_class = implode(',',$material_class);
-
-        $station_details = $matrix_data[0]->material_process[0]->station_details;
-
         // return $matrix_data;
-        return response()->json(['device_details' => $matrix_data, 'material_details' => $material_type, 'material_codes' => $material_codes, 'material_class' => $material_class]);
+
     }
 
     public function GetProdRuncardQrCode (Request $request){
-        $runcard = ProductionRuncard::select('po_number',
+        $runcard = ProductionRuncard::select('production_runcards.id',
+                                            'po_number',
                                             'po_quantity',
                                             'part_name',
                                             'part_code',
@@ -915,34 +963,71 @@ class ProductionRuncardController extends Controller
                                         $join->on('production_runcard_stations.prod_runcards_id', '=' ,'production_runcards.id');
                                     })
                                     ->leftJoin('users', function($join) {
-                                        $join->on('users.id', '=', 'production_runcards.created_by');
+                                        $join->on('users.id', '=', 'production_runcards.last_updated_by');
                                     })
                                     ->where('production_runcards.id', $request->runcard_id)
                                     ->whereNull('production_runcards.deleted_at')
                                     ->first();
+        // return $runcard;
+
+        $op_names_array = [];
+        $operator_name_per_runcard = DB::table('production_runcard_stations AS stations')
+                                    ->select(DB::raw("CONCAT(LEFT(users.firstname, 1), '.', users.lastname) AS operator_name"))
+                                    ->join('users', 'stations.operator_name', '=', 'users.id')
+                                    ->where('stations.prod_runcards_id', $runcard->id)
+                                    ->whereNull('stations.deleted_at')
+                                    ->distinct()
+                                    ->get();
+                                    // ->pluck('operator_name');
+
+        // return $operator_name_per_runcard;
+        $all_operator_names = [];
+        foreach ($operator_name_per_runcard as $row) {
+            $all_operator_names[] = $row->operator_name;  // Add a space or custom separator
+        }
+        $all_operator_names = implode(', ', $all_operator_names);
+
+        // foreach ($operator_name_per_runcard as $items) {
+        //     array_push($op_names_array, $items);
+        // }
+
+        // $unique_op_names = array_unique($op_names_array);
+        // $all_operator_names = implode(', ', $unique_op_names);
 
         if($runcard->runcard_status == 3){
             $shipment_output = $runcard->shipment_output;
+            $print_status = 'For OQC';
+        }else if($runcard->runcard_status == 1){
+            $shipment_output = $runcard->shipment_output;
+            $print_status = 'For Traceability Only';
+        }else if($runcard->runcard_status == 0){
+            // $shipment_output = $runcard->shipment_output;
+            $shipment_output = 'N/A';
+            $all_operator_names = $runcard->operator_name;
+            $print_status = 'For IPQC';
         }else{
             $shipment_output = 'N/A';
         }
-
+// $print_status
         $qrcode = QrCode::format('png')
         ->size(300)->errorCorrection('H')
         ->generate(json_encode($runcard));
 
         $qr_code = "data:image/png;base64," . base64_encode($qrcode);
 
+        $print_status!='For OQC'?'':$print_status;
+        // <strong>$print_status</strong><br>
         $data[] = array(
-            'img' => $qr_code,
+            'img'  => $qr_code,
             'text' =>  "<strong>$runcard->po_number</strong><br>
             <strong>$runcard->po_quantity</strong><br>
             <strong>$runcard->part_name</strong><br>
             <strong>$runcard->part_code</strong><br>
             <strong>$runcard->production_lot</strong><br>
             <strong>$shipment_output</strong><br>
-            <strong>$runcard->operator_name</strong><br>
+            <strong>$all_operator_names</strong><br>
             "
+            // <strong>$print_status</strong><br> //clark comment 01/08/2025
         );
 
         $label = "
@@ -973,7 +1058,11 @@ class ProductionRuncardController extends Controller
                 </tr>
                 <tr>
                     <td>Operator Name:</td>
-                    <td>$runcard->operator_name</td>
+                    <td>$all_operator_names</td>
+                </tr>
+                <tr>
+                    <td>QR Purpose:</td>
+                    <td>$print_status</td>
                 </tr>
             </table>
         ";

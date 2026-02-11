@@ -23,30 +23,29 @@ use Illuminate\Support\Facades\Session;
 
 class UserController extends Controller
 {
-    public function rapidx_sign_in_admin(Request $request)
-    {
+    public function rapidxAutoSignIn(Request $request){
         $user_data = $request->all();
         $validator = Validator::make($request->all(), [
             'username' => 'required',
         ]);
 
-        if ($validator->passes()) {
-            $user_info = RapidxUser::where('username', $request->username)->first();
+        if ($validator->passes()){
+            $user_info = DB::connection('rapidx')->select("SELECT * FROM users WHERE username = '$request->username' LIMIT 1");
+            // $user_info = RapidxUser::where('username', $request->username)->first();
             // return $user_info;
-            if ($user_info != null) {
+            if ($user_info[0] != null) {
                 session_start();
-                $_SESSION["rapidx_user_id"] = $user_info->id;
-                $_SESSION["rapidx_user_level_id"] = $user_info->user_level_id;
-                $_SESSION["rapidx_username"] = $user_info->username;
-                $_SESSION["rapidx_name"] = $user_info->name;
-                $_SESSION["rapidx_email"] = $user_info->email;
-                $_SESSION["rapidx_department_id"] = $user_info->department_id;
-                $_SESSION["rapidx_employee_number"] =  $user_info->employee_number;
+                $_SESSION["rapidx_user_id"] = $user_info[0]->id;
+                $_SESSION["rapidx_user_level_id"] = $user_info[0]->user_level_id;
+                $_SESSION["rapidx_username"] = $user_info[0]->username;
+                $_SESSION["rapidx_name"] = $user_info[0]->name;
+                $_SESSION["rapidx_email"] = $user_info[0]->email;
+                $_SESSION["rapidx_department_id"] = $user_info[0]->department_id;
+                $_SESSION["rapidx_employee_number"] =  $user_info[0]->employee_number;
 
-                $user_accesses = RapidXUserAccess::on('rapidx')->where('user_id', $user_info->id)
-                    ->where('user_access_stat', 1)
-                    ->get();
-
+                // $user_accesses = RapidXUserAccess::on('rapidx')->where('user_id', $user_info[0]->id)->where('user_access_stat', 1)->get();
+                $user_id = $user_info[0]->id;
+                $user_accesses = DB::connection('rapidx')->select("SELECT * FROM user_accesses WHERE user_id = '$user_id' AND user_access_stat = 1");
                 $arr_user_accesses = [];
                 for ($index = 0; $index < count($user_accesses); $index++) {
                     array_push($arr_user_accesses, array(

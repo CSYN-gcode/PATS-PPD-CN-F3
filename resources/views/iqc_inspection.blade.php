@@ -244,7 +244,7 @@
         </div>
 
         <!-- MODALS -->
-        <div class="modal fade" id="modalVerifyData">
+        <div class="modal fade" id="modalVerifyData" aria-hidden="false">
             <div class="modal-dialog modal-dialog-center">
                 <div class="modal-content modal-sm">
                     <div class="modal-body">
@@ -433,7 +433,10 @@
                 });
 
                 $('#modalVerifyData').on('shown.bs.modal', function () {
-                    $('#txtScanVerifyData').focus();
+                    // $('#txtScanVerifyData').focus();
+                    setTimeout(() => {
+                        $('#txtScanVerifyData').focus();
+                    }, 500);
                 });
 
                 $('#txtScanVerifyData').on('keyup', function(e){
@@ -449,10 +452,13 @@
 
                                 console.log('tblIqcInspection', lot_no);
                                 console.log('scannedItem', scannedItem);
-                                if(scannedItem === lot_no){
+                                if(scannedItem == lot_no){
                                     $(tr).addClass('checked-ok');
                                     powerOff.removeAttr('style');
                                     $('#modalVerifyData').modal('hide');
+                                    console.log('goods');
+                                }else{
+                                    toastr.error('QR Scanning Failed');
                                 }
                                 // console.log(lot_no);
                             })

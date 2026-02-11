@@ -146,6 +146,7 @@ $(document).ready(function(){
     let dtQualificationPending = $("#tblRuncardQualiPending").DataTable({
         "processing" : true,
         "serverSide" : true,
+        "lengthMenu": [ [25, -1], [25, "All"] ],
         "ajax" : {
             url: "view_qualification_data",
             data: function(param){
@@ -157,12 +158,14 @@ $(document).ready(function(){
             }
         },
         fixedHeader: true,
-        "order":[[7, 'desc']],
+        "order": [0, 'desc'],
         "columns":[
+            { "data" : "id", searchable:false, visible:false },
             { "data" : "action", orderable:false, searchable:false },
             { "data" : "quali_status" },
             { "data" : "process_status" },
             { "data" : "request_created_at" },
+            { "data" : "part_name" },
             { "data" : "po_number" },
             { "data" : "production_lot" },
             { "data" : "judgement" },
@@ -184,12 +187,14 @@ $(document).ready(function(){
             }
         },
         fixedHeader: true,
-        "order":[[7, 'desc']],
+        "order": [0, 'desc'],
         "columns":[
+            { "data" : "id", searchable:false, visible:false },
             { "data" : "action", orderable:false, searchable:false },
             { "data" : "quali_status" },
             { "data" : "process_status" },
             { "data" : "request_created_at" },
+            { "data" : "part_name" },
             { "data" : "po_number" },
             { "data" : "production_lot" },
             { "data" : "judgement" },
@@ -211,12 +216,14 @@ $(document).ready(function(){
             }
         },
         fixedHeader: true,
-        "order":[[7, 'desc']],
+        "order": [0, 'desc'],
         "columns":[
+            { "data" : "id", searchable:false, visible:false },
             { "data" : "action", orderable:false, searchable:false },
             { "data" : "quali_status" },
             { "data" : "process_status" },
             { "data" : "request_created_at" },
+            { "data" : "part_name" },
             { "data" : "po_number" },
             { "data" : "production_lot" },
             { "data" : "judgement" },
@@ -299,6 +306,19 @@ $(document).ready(function(){
         $("#buttonAddQualiQcModeOfDefect").prop('disabled', true);
 
         $("#btnSaveQualificationDetails").prop('hidden', false);
+        $("#ScanProductLot").prop('hidden', true);
+
+        $('#formAddQualiDetails #txtProdRuncardId').val($('#formProductionRuncard #txtProdRuncardId').val());
+        $('#formAddQualiDetails #txtProductionLot').val($('#formProductionRuncard #txtProductionLot').val());
+        $('#formAddQualiDetails #txtPoNumber').val($('#formProductionRuncard #txtPONumber').val());
+        $('#formAddQualiDetails #txtPoQty').val($('#formProductionRuncard #txtPOBalance').val());
+        $('#formAddQualiDetails #txtPartCode').val($('#formProductionRuncard #txtPartCode').val());
+        $('#formAddQualiDetails #txtPartName').val($('#formProductionRuncard #txtPartName').val());
+
+        $("#QualificationProdDiv").prop('hidden', false);
+        $("#QualificationQcDiv").prop('hidden', true);
+        $("#QualificationQcEngrDiv").prop('hidden', true);
+        $("#QualificationQcEngr2Div").prop('hidden', true);
 
         frmQualifications.find('#txtQualiProdNameID').prop('disabled', false)
         frmQualifications.find('#txtQualiProdName').prop('disabled', false)
@@ -716,6 +736,11 @@ $(document).ready(function(){
                 const quali_mod_prod = response['quali_mod_prod'];
                 const quali_mod_qc = response['quali_mod_qc'];
 
+                $("#QualificationProdDiv").prop('hidden', false);
+                $("#QualificationQcDiv").prop('hidden', false);
+                $("#QualificationQcEngrDiv").prop('hidden', false);
+                $("#QualificationQcEngr2Div").prop('hidden', false);
+
                 frmQualifications.find('#txtQualiDetailsId').val(quali_data['id']);
                 frmQualifications.find('#txtProdRuncardId').val(quali_data['fk_prod_runcard_id']);
                 frmQualifications.find('#txtProductionLot').val(quali_data['production_lot']);
@@ -724,6 +749,7 @@ $(document).ready(function(){
                 frmQualifications.find('#txtPoQty').val(quali_data['po_quantity']);
                 frmQualifications.find('#txtPartName').val(quali_data['part_name']);
                 frmQualifications.find('#txtPartCode').val(quali_data['part_code']);
+                frmQualifications.find('#txtCategory').val(quali_data['prod_category']);
 
                 frmQualifications.find('#txtQualiProdNameID').val(quali_data['prod_name']);
                 frmQualifications.find('#txtQualiProdName').val(quali_data['prod_fname'] +' '+ quali_data['prod_lname']);
@@ -735,10 +761,16 @@ $(document).ready(function(){
                 frmQualifications.find('#txtQualiProdActualSample').val(quali_data['prod_actual_sample_used']);
                 frmQualifications.find('#txtQualiProdRemarks').val(quali_data['prod_actual_sample_remarks']);
 
-                frmQualifications.find('#txtQualiQCNameID').val(quali_data['qc_name']);
-                frmQualifications.find('#txtQualiQCName').val(quali_data['qc_fname'] +' '+ quali_data['qc_lname']);
+                if(quali_data['qc_name'] != null){
+                    frmQualifications.find('#txtQualiQCNameID').val(quali_data['qc_name']);
+                    frmQualifications.find('#txtQualiQCName').val(quali_data['qc_fname'] +' '+ quali_data['qc_lname']);
+                }
+
                 frmQualifications.find('#txtQualiQcDate').val(quali_data['qc_date']);
-                frmQualifications.find('#txtQualiQcInputQty').val(quali_data['qc_input_qty']);
+                frmQualifications.find('#txtQualiQcInputQty').val(quali_data['prod_output_qty']); //SET PROD Output Qty as QC Input Qty
+                frmQualifications.find('#txtQualiQcInputQty').prop('readonly', true); //SET QC Input as Readonly
+                frmQualifications.find('#txtCategory').prop('disabled', true); //SET QC Input as Readonly
+
                 frmQualifications.find('#txtQualiQcNgQty').val(quali_data['qc_ng_qty']);
                 frmQualifications.find('#txtQualiQcOutputQty').val(quali_data['qc_output_qty']);
                 frmQualifications.find('#txtQualiQcJudgement').val(quali_data['qc_actual_sample_result']);
@@ -1139,11 +1171,18 @@ $(document).ready(function(){
 
     $(document).on('keyup','#txtScanUserId', function(e){
         if(e.keyCode == 13){
-            validateUser($(this).val(), [0, 2, 5], function(result){
+            let auth_position;
+
+            if($('#txtProcessStatus').val() == 1){
+                auth_position = [0, 1, 4, 12, 13, 14];
+            }else{
+                auth_position = [0, 2, 5];
+            }
+
+            validateUser($(this).val(), auth_position, function(result){
                 if(result == true){
                     AddIpqcInspection();
-                }
-                else{ // Error Handler
+                }else{ // Error Handler
                     toastr.error('User not authorize!');
                 }
             });
@@ -1166,11 +1205,88 @@ $(document).ready(function(){
             },
             success: function (response) {
                 let result = response['result'];
+                console.log(response);
                 // if (result == 'Insert Successful' || result == 'Update Successful') {
-                if (result == 'Successful!') {
+                if(response['validation'] == 'hasError'){
+                    toastr.error('Saving failed!, Please complete all required fields');
+                    if(response['error']['production_lot'] === undefined) {
+                        $("#txtProductionLot").removeClass('is-invalid');
+                        $("#txtProductionLot").attr('title', '');
+                    }else{
+                        $("#txtProductionLot").addClass('is-invalid');
+                        $("#txtProductionLot").attr('title', response['error']['production_lot']);
+                    }
+
+                    //     // $("#txtPoNumber").addClass('is-invalid');
+                    //     // $("#txtPoNumber").attr('title', response['error']['po_number']);
+
+                    //     // $("#txtPoQty").addClass('is-invalid');
+                    //     // $("#txtPoQty").attr('title', response['error']['po_number']);
+
+                    //     // $("#txtPartName").addClass('is-invalid');
+                    //     // $("#txtPartName").attr('title', response['error']['po_number']);
+
+                    //     // $("#txtPartCode").addClass('is-invalid');
+                    //     // $("#txtPartCode").attr('title', response['error']['po_number']);
+                    //     $('#modalScanQRSave').modal('hide');
+                    // }
+
+                    if(response['error']['category'] === undefined){
+                        $("#txtCategory").removeClass('is-invalid');
+                        $("#txtCategory").attr('title', '');
+                    }else{
+                        $("#txtCategory").addClass('is-invalid');
+                        $("#txtCategory").attr('title', response['error']['category']);
+                    }
+
+                    if(response['error']['quali_prod_date'] === undefined){
+                        $("#txtQualiProdDate").removeClass('is-invalid');
+                        $("#txtQualiProdDate").attr('title', '');
+                    }else{
+                        $("#txtQualiProdDate").addClass('is-invalid');
+                        $("#txtQualiProdDate").attr('title', response['error']['quali_prod_date']);
+                    }
+
+                    if(response['error']['quali_prod_input_qty'] === undefined){
+                        $("#txtQualiProdInputQty").removeClass('is-invalid');
+                        $("#txtQualiProdInputQty").attr('title', '');
+                    }else{
+                        $("#txtQualiProdInputQty").addClass('is-invalid');
+                        $("#txtQualiProdInputQty").attr('title', response['error']['quali_prod_input_qty']);
+                    }
+
+                    if(response['error']['quali_prod_output_qty'] === undefined){
+                        $("#txtQualiProdOutputQty").removeClass('is-invalid');
+                        $("#txtQualiProdOutputQty").attr('title', '');
+                    }else{
+                        $("#txtQualiProdOutputQty").addClass('is-invalid');
+                        $("#txtQualiProdOutputQty").attr('title', response['error']['quali_prod_output_qty']);
+                    }
+
+                    if(response['error']['quali_prod_judgement'] === undefined){
+                        $("#txtQualiProdJudgement").removeClass('is-invalid');
+                        $("#txtQualiProdJudgement").attr('title', '');
+                    }else{
+                        $("#txtQualiProdJudgement").addClass('is-invalid');
+                        $("#txtQualiProdJudgement").attr('title', response['error']['quali_prod_judgement']);
+                    }
+
+                    if(response['error']['quali_prod_actual_sample'] === undefined){
+                        $("#txtQualiProdActualSample").removeClass('is-invalid');
+                        $("#txtQualiProdActualSample").attr('title', '');
+                    }else{
+                        $("#txtQualiProdActualSample").addClass('is-invalid');
+                        $("#txtQualiProdActualSample").attr('title', response['error']['quali_prod_actual_sample']);
+                    }
+
+                    $('#modalScanQRSave').modal('hide');
+                }else if (result == 'Successful!'){
                     toastr.success('Successful!');
                     $('#modalQualiDetails').modal('hide');
                     $('#modalScanQRSave').modal('hide');
+                    $('#btnAddRuncardStation').removeClass('d-none');
+                    $('#btnAddQualificationData').addClass('d-none');
+
                     dtQualificationPending.draw();
                     dtQualificationCompleted.draw();
                     dtQualificationResetup.draw();
@@ -1221,6 +1337,7 @@ $(document).ready(function(){
                 frmQualifications.find('#txtPoQty').val(quali_data['po_quantity']);
                 frmQualifications.find('#txtPartName').val(quali_data['part_name']);
                 frmQualifications.find('#txtPartCode').val(quali_data['part_code']);
+                frmQualifications.find('#txtCategory').val(quali_data['prod_category']);
 
                 frmQualifications.find('#txtQualiProdNameID').val(quali_data['prod_name']);
                 frmQualifications.find('#txtQualiProdName').val(quali_data['prod_fname'] +' '+ quali_data['prod_lname']);

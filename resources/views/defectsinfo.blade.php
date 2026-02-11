@@ -192,9 +192,10 @@
                 });
             });
 
-            $(document).on('click', '.btnDisable', function(e){
+            // $(document).on('click', '.btnDisable', function(e){
+            $(document).on('click', '.btnChangeStat', function(e){
                 let pId = $(this).data('id');
-
+                let status = $(this).data('status');
                 Swal.fire({
                     text: "Are you sure you want to disable this process",
                     icon: "warning",
@@ -206,18 +207,19 @@
                     if (result.isConfirmed) {
                         $.ajax({
                             type: "post",
-                            url: "update_status",
+                            url: "update_defects_status",
                             data: {
                                 "_token": "{{ csrf_token() }}",
                                 "id" : pId,
+                                "status" : status,
                             },
                             dataType: "json",
                             success: function (response) {
+                                datatableProcesss.draw();
                             }
                         });
                     }
                 });
-
             })
         </script>
     @endsection

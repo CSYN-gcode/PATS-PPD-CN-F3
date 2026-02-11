@@ -12,6 +12,6 @@ class Devices extends Model
     protected $connection = "mysql";
 
     public function material_process(){
-        return $this->hasMany(MaterialProcess::class, 'device_id', 'id');
+        return $this->hasMany(MaterialProcess::class, 'device_id', 'id')->where('status', 0);
     }
 }

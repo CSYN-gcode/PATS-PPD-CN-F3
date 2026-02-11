@@ -25,21 +25,42 @@ class QualificationController extends Controller
 {
     //================================== VIEW IPQC DATA IN DATATABLES =====================================
     public function ViewIpqcData(Request $request){
+
+        $user_details = User::where('id', Auth::user()->id)->first();
+        $position = $user_details->position;
+        $auth_prod = [1,4,12,13,14];
+        $auth_qc = [2,5];
+        $auth_engr = [9,11,17,18,19];
+
+        if($position == 0){
+            $process_status = [1,2,3,4];
+        }else if(in_array($position,$auth_prod)){
+            $process_status = [1,4];
+        }else if(in_array($position,$auth_qc)){
+            $process_status = [2,4];
+        }else if(in_array($position,$auth_engr)){
+            $process_status = [3,4];
+        }else{
+            $process_status = [4];
+        }
+
         $view_quali_data = DB::table('qualification_details AS quali')->select('quali.*', 'prod_user.firstname AS prod_fname', 'prod_user.lastname AS prod_lname', 'qc_user.firstname AS qc_fname', 'qc_user.lastname AS qc_lname', 'runcard.po_number', 'runcard.production_lot', 'runcard.part_name')
                             ->leftJoin('production_runcards AS runcard', 'quali.fk_prod_runcard_id', '=', 'runcard.id')
                             ->leftJoin('users AS prod_user', 'quali.prod_name', '=', 'prod_user.id')
                             ->leftJoin('users AS qc_user', 'quali.prod_name', '=', 'qc_user.id')
-                            ->when($request->part_name, function ($query) use ($request){
-                                return $query ->where('runcard.part_name', $request->part_name)
-                                              ->whereNull('runcard.deleted_at');
-                            })
+                            // ->when($request->part_name, function ($query) use ($request){
+                            //     return $query ->where('runcard.part_name', $request->part_name)
+                            //                   ->whereNull('runcard.deleted_at');
+                            // })
+                            ->where('runcard.part_name', $request->part_name)
+                            ->whereNull('runcard.deleted_at')
                             ->whereIn('quali.status', $request->status)
-                            // ->whereIn('quali.process_status', $request->process_status)
+                            // ->whereIn('quali.process_status', $process_status)
                             ->where('quali.logdel', 0)
                             ->get();
 
         return DataTables::of($view_quali_data)
-        ->addColumn('action', function($view_quali_data){
+        ->addColumn('action', function($view_quali_data) use($position,$auth_prod,$auth_qc,$auth_engr){
 
             $action_btn_update = "<button class='btn btn-primary btn-sm btnUpdateQualiData' ipqc_data-id='$view_quali_data->id'>
                                   <i class='fa-solid fa-microscope' data-bs-html='true' title='Proceed to IPQC Inspection'></i></button>";
@@ -47,28 +68,52 @@ class QualificationController extends Controller
             $action_btn_submit = "<button class='btn btn-success btn-sm btnSubmitIPQCData' ipqc_data-id='$view_quali_data->id'>
                                   <i class='fa-solid fa-circle-check' data-bs-html='true' title='Proceed to Mass Production'></i></button>";
 
+            $action_btn_view = "<button class='btn btn-info btn-sm btnViewQualiData' ipqc_data-id='$view_quali_data->id'>
+                                  <i class='fa-solid fa-eye' data-bs-html='true' title='View IPQC Inspection'></i></button>";
+
             $result = "";
             $result .= "<center>";
-            $result .= "<button class='btn btn-info btn-sm btnViewQualiData' ipqc_data-id='$view_quali_data->id'>
-                        <i class='fa-solid fa-eye' data-bs-html='true' title='View IPQC Inspection'></i></button>";
+            // $result .= "<button class='btn btn-info btn-sm btnViewQualiData' ipqc_data-id='$view_quali_data->id'>
+            //             <i class='fa-solid fa-eye' data-bs-html='true' title='View IPQC Inspection'></i></button>";
 
             // switch ($view_quali_data->process_status) {
             //     case '1':
-                        if($view_quali_data->status < 3){ //Not Exsisting IPQC ID or Status less than 3(0 - Pending, 1,2 - Updated): Enabled Updating
-                            $result .= "&nbsp";
-                            $result .= $action_btn_update;
-                        }else if($view_quali_data->status == 5){ //Exsisting IPQC ID & Status 5(For Resetup): Enabled Updating
+                // if($position == 0 || in_array($position,$auth_prod)){
+                    $result .= $action_btn_view;
+                    $proc_status = $view_quali_data->process_status;
+                    if($view_quali_data->status < 3){ //Not Exsisting IPQC ID or Status less than 3(0 - Pending, 1,2 - Updated): Enabled Updating
+                        if($position == 0 || ($proc_status == 1 && in_array($position,$auth_prod)) ||
+                        ($proc_status == 2 && in_array($position,$auth_qc)) || ($proc_status == 3 && in_array($position,$auth_engr))){
                             $result .= "&nbsp";
                             $result .= $action_btn_update;
                         }
+                    }else if($view_quali_data->status == 5){ //Exsisting IPQC ID & Status 5(For Resetup): Enabled Updating
+                        if($position == 0 || ($proc_status == 1 && in_array($position,$auth_prod)) ||
+                        ($proc_status == 2 && in_array($position,$auth_qc)) || ($proc_status == 3 && in_array($position,$auth_engr))){
+                            $result .= "&nbsp";
+                            $result .= $action_btn_update;
+                        }
+                    }
 
-                        if($view_quali_data->status == 1){ //Exsisting IPQC ID & Status 1(Accepted): Ready to Submit
-                            $result .= "&nbsp";
-                            $result .= $action_btn_submit;
-                        }else if($view_quali_data->status == 2){ //Exsisting IPQC ID & Status 2(Rejected): Ready to Submit
+                    if($view_quali_data->status == 1 || $view_quali_data->status == 2){ //Exsisting IPQC ID & Status 1(Accepted): Ready to Submit
+                        if($position == 0 || ($proc_status == 1 && $view_quali_data->prod_actual_sample_result != NULL && in_array($position,$auth_prod)) ||
+                        ($proc_status == 2 && $view_quali_data->qc_actual_sample_result != NULL && in_array($position,$auth_qc)) ||
+                        ($proc_status == 3 && $view_quali_data->engr_ct_height_data != NULL && in_array($position,$auth_engr))){
                             $result .= "&nbsp";
                             $result .= $action_btn_submit;
                         }
+                    }
+                    // else if($view_quali_data->status == 2){ //Exsisting IPQC ID & Status 2(Rejected): Ready to Submit
+                    //     if($position == 0 || ($proc_status == 1 && in_array($position,$auth_prod)) ||
+                    //     ($proc_status == 2 && in_array($position,$auth_qc)) ||($proc_status == 3 && in_array($position,$auth_engr))){
+                    //         $result .= "&nbsp";
+                    //         $result .= $action_btn_submit;
+                    //     }
+                    // }
+                // }else{
+                //     $result .= $action_btn_view;
+                // }
+
             //         break;
             //     case '2':
             //         # code...
@@ -248,7 +293,7 @@ class QualificationController extends Controller
         $quali_data = DB::table('qualification_details AS quali')->select('quali.*', 'prod_user.firstname AS prod_fname', 'prod_user.lastname AS prod_lname', 'qc_user.firstname AS qc_fname', 'qc_user.lastname AS qc_lname', 'runcard.po_number', 'runcard.po_quantity', 'runcard.production_lot', 'runcard.part_name', 'runcard.part_code')
                                 ->leftJoin('production_runcards AS runcard', 'quali.fk_prod_runcard_id', '=', 'runcard.id')
                                 ->leftJoin('users AS prod_user', 'quali.prod_name', '=', 'prod_user.id')
-                                ->leftJoin('users AS qc_user', 'quali.prod_name', '=', 'qc_user.id')
+                                ->leftJoin('users AS qc_user', 'quali.qc_name', '=', 'qc_user.id')
                                 // ->leftJoin('qualification_details_mods AS quali_mod', 'quali.id', '=', 'quali_mod.quali_details_id')
                                 ->when($request->part_name, function ($query) use ($request){
                                     return $query ->where('runcard.part_name', $request->part_name)
@@ -300,9 +345,13 @@ class QualificationController extends Controller
         // return $data;
         if($request->quali_details_id == 0){
             $validator = Validator::make($data, [
-                //     'doc_no_b_drawing' => 'required',
-                //     'doc_no_inspection_standard' => 'required',
-                //     'doc_no_ud' => 'required',
+                    'production_lot' => 'required',
+                    'category' => 'required',
+                    'quali_prod_date' => 'required',
+                    'quali_prod_input_qty' => 'required',
+                    'quali_prod_output_qty' => 'required',
+                    'quali_prod_judgement' => 'required',
+                    'quali_prod_actual_sample' => 'required',
                 //     'uploaded_file' => 'required',
             ]);
 
@@ -323,9 +372,9 @@ class QualificationController extends Controller
                 // if($request->process_status == '1' && $request->sub_station_step == '2'){
                     $inserted_quali_id = QualificationDetail::insertGetId([
                         'fk_prod_runcard_id'         => $request->prod_runcard_id,
-
                         'prod_date'                  => $request->quali_prod_date,
-                        'prod_name'                  => $request->quali_prod_name_id,
+                        'prod_name'                  => Auth::user()->id,
+                        'prod_category'              => $request->category,
                         'prod_input_qty'             => $request->quali_prod_input_qty,
                         'prod_output_qty'            => $request->quali_prod_output_qty,
                         'prod_ng_qty'                => $request->quali_prod_ng_qty,
@@ -333,9 +382,10 @@ class QualificationController extends Controller
                         'prod_actual_sample_result'  => $request->quali_prod_judgement,
                         'prod_actual_sample_used'    => $request->quali_prod_actual_sample,
                         'prod_actual_sample_remarks' => $request->quali_prod_remarks,
-
-                        'process_status'             => $request->process_status,
-                        'status'                     => $request->quali_prod_judgement,
+                        // 'process_status'             => $request->process_status, // clark old status 01/08/2025
+                        // 'status'                     => $request->quali_prod_judgement, // clark old status 01/08/2025
+                        'process_status'             => 2, //clark new status 01/08/2025
+                        'status'                     => 1, //clark new status 01/08/2025
                         'created_by'                 => Auth::user()->id,
                         'last_updated_by'            => Auth::user()->id,
                         'created_at'                 => date('Y-m-d H:i:s'),
@@ -348,15 +398,13 @@ class QualificationController extends Controller
                 // return response()->json(['result' => 'Insert Successful']);
             }
         }else{
-
             if($request->process_status == 1){
-
                 QualificationDetail::where('id', $request->quali_details_id)
                 ->update([
                     'fk_prod_runcard_id'         => $request->prod_runcard_id,
-
+                    'prod_category'              => $request->category,
                     'prod_date'                  => $request->quali_prod_date,
-                    'prod_name'                  => $request->quali_prod_name_id,
+                    'prod_name'                  => Auth::user()->id,
                     'prod_input_qty'             => $request->quali_prod_input_qty,
                     'prod_output_qty'            => $request->quali_prod_output_qty,
                     'prod_ng_qty'                => $request->quali_prod_ng_qty,
@@ -364,9 +412,7 @@ class QualificationController extends Controller
                     'prod_actual_sample_result'  => $request->quali_prod_judgement,
                     'prod_actual_sample_used'    => $request->quali_prod_actual_sample,
                     'prod_actual_sample_remarks' => $request->quali_prod_remarks,
-
                     'process_status'             => $request->process_status,
-
                     // 'status'                     => $status,
                     'created_by'                 => Auth::user()->id,
                     'last_updated_by'            => Auth::user()->id,
@@ -397,7 +443,7 @@ class QualificationController extends Controller
                 QualificationDetail::where('id', $request->quali_details_id)
                 ->update([
                     'qc_date'                  => $request->quali_qc_date,
-                    'qc_name'                  => $request->quali_qc_name_id,
+                    'qc_name'                  => Auth::user()->id,
                     'qc_input_qty'             => $request->quali_qc_input_qty,
                     'qc_output_qty'            => $request->quali_qc_output_qty,
                     'qc_ng_qty'                => $request->quali_qc_ng_qty,

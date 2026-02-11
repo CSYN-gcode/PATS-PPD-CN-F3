@@ -39,17 +39,20 @@ class MimfController extends Controller
             $result = '<center>';
             if($get_mimf->pps_po_received_info->POBalance != 0){
                 $result .= '
-                <button class="btn btn-dark btn-sm text-center mr-2
-                    actionEditMimf" 
-                    mimf-id="'. $get_mimf->id .'" 
-                    po_received-id="'. $get_mimf->pps_po_received_info->id .'" 
-                    data-bs-toggle="modal" 
-                    data-bs-target="#modalMimf"
-                    data-bs-keyboard="false" title="Edit">
-                    <i class="nav-icon fa fa-edit"></i>
-                </button>';
+                    <button class="btn btn-dark btn-sm text-center mr-2
+                        actionEditMimf" 
+                        mimf-id="'. $get_mimf->id .'" 
+                        po_received-id="'. $get_mimf->pps_po_received_info->id .'" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#modalMimf"
+                        data-bs-keyboard="false" title="Edit">
+                        <i class="nav-icon fa fa-edit"></i>
+                    </button>';
+            }else{
+                $result .= '<span class="badge badge-pill badge-success"> COMPLETED! </span>';
+            }
 
-                $result .= '
+            $result .= '
                 <button class="btn btn-warning btn-sm text-center 
                     actionMimfPpsRequest" 
                     mimf-id="'. $get_mimf->id .'"
@@ -59,10 +62,6 @@ class MimfController extends Controller
                     data-bs-keyboard="false" title="PPS Request">
                     <i class="nav-icon fa fa-history"></i>
                 </button>';
-
-            }else{
-                $result .= '<span class="badge badge-pill badge-success"> COMPLETED! </span>';
-            }
             $result .= '</center>';
             return $result;
         })
@@ -321,11 +320,11 @@ class MimfController extends Controller
         ->where('deleted', 0)
         ->first();
 
-        $get_ids =  TblDieset::with(['ppd_matrix_info'])->where('R3Code', $request->mimf_material_code)->get();
+        $get_ids =  TblDieset::with(['ppd_matrix_info'])->where('R3Code', $request->get_mimf_device_name)->get();
 
         $get_itemlist_id = PPSItemList::where('partcode', $request->mimf_material_code)
         ->where('partname', $request->mimf_material_type)
-        ->where('Factory', 1)
+        ->where('Factory', '!=', 3)
         ->first();
 
         if($get_ids->isNotEmpty()){
@@ -439,6 +438,15 @@ class MimfController extends Controller
             //     return response()->json(['hasError' => 1, 'exceptionError' => $e->getMessage()]);
             // }
         }
+    }
+
+    public function getMimfPpsRequestById(Request $request){
+        date_default_timezone_set('Asia/Manila');
+        
+        $get_mimf_pps_request_to_edit =  MimfPpsRequest::with([
+            'rapid_pps_request_info'
+        ])->where('id', $request->mimfPpsRequestID)->get();
+        return response()->json(['getMimfPpsRequestToEdit'  => $get_mimf_pps_request_to_edit]);
     }
 
 }

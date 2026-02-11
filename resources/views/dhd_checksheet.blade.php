@@ -64,18 +64,40 @@
                                                 class="fa fa-initial-icon"></i> Add New Data</button>
                                     </div> <br><br>
                                     <div class="table-responsive">
-                                        <table id="tblDHDChecksheet" class="table table-sm table-bordered table-striped table-hover"
+                                        <table id="tblDHDMonitoring1" class="table table-sm table-bordered table-striped table-hover"
                                             style="width: 100%;">
                                             <thead>
-                                                <tr align="center">
-                                                    <th>Action</th>
-                                                    <th>Date</th>
-                                                    <th>DHD Number</th>
-                                                    <th>Device Name</th>
-                                                    <th>Person In-change</th>
-                                                    <th>QC Inspector</th>
-                                                    <th>Remarks</th>
+                                                <tr>
+                                                    <th rowspan="4" style="text-align: center;">Action</th>
+                                                    <th rowspan="4" style="text-align: center;">Created At</th>
+                                                    <th rowspan="4" style="text-align: center;">DHD Number</th>
+                                                    <th rowspan="4" style="text-align: center;">Device Code</th>
+                                                    <th rowspan="4" style="text-align: center;">Device Name</th>
+                                                    <th rowspan="4" style="text-align: center;">Material Name</th>
+                                                    <th colspan="2" style="text-align: center;">Materials Mixing</th>
+                                                    <th rowspan="4" style="text-align: center;">Total Mixed Mat'ls (Kgs.)</th>
+                                                    <th colspan="2" style="text-align: center;">Material Lot No.</th>
+                                                    <th colspan="4" style="text-align: center;">Material Drying</th>
+                                                    <th colspan="6" style="text-align: center;">DHD Monitoring</th>
                                                 </tr>
+                                                <tr>
+                                                    <th rowspan="2" style="text-align: center;">Virgin (Kgs.)</th>
+                                                    <th rowspan="2" style="text-align: center;">Recycle (Kgs.)</th>
+                                                    <th rowspan="2" style="text-align: center;">Virgin</th>
+                                                    <th rowspan="2" style="text-align: center;">Recycle</th>
+                                                    <th colspan="2" style="text-align: center;">Temperature</th>
+                                                    <th colspan="2" style="text-align: center;">Time</th>
+                                                    <th colspan="3" style="text-align: center;">A Shift</th>
+                                                    <th colspan="3" style="text-align: center;">B Shift</th>
+                                                </tr>
+                                                <tr>
+                                                    <th>Setting</th>
+                                                    <th>Actual</th>
+                                                    <th>IN</th>
+                                                    <th>OUT</th>
+                                                    <th colspan="3">1200hrs - 1300hrs</th>
+                                                </tr>
+
                                             </thead>
                                         </table>
                                     </div>
@@ -97,7 +119,7 @@
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    <form method="post" id="formDHD" autocomplete="off">
+                    <form id="formDHDMonitoring" autocomplete="off">
                         @csrf
                         <div class="modal-body">
                             <input type="hidden" id="txtDHDId" name="id">
@@ -113,7 +135,7 @@
                                         </div>
                                         <div class="col-sm-4">
                                             <label>Device Code</label>
-                                            <input type="text" class="form-control" name="device_code" id="txtDeviceCode" readonly>
+                                            <input type="text" class="form-control" name="device_code" id="txtDeviceCode" >
                                         </div>
                                     </div>
                                 </div>
@@ -150,7 +172,7 @@
                                             <input type="text" class="form-control" name="mtl_mix_recycle" placeholder="(Recycle - Kgs.)" id="txtMaterialMixRecycle">
                                         </div>
                                         <div class="col-sm-4">
-                                            <input type="text" class="form-control" name="mtl_ttl_mixing" placeholder="Total Mixed Mat'ls (Kgs.)" id="txtMaterialTotalMixing" readonly>
+                                            <input type="text" class="form-control" name="mtl_ttl_mixing" placeholder="Total Mixed Mat'ls (Kgs.)" id="txtMaterialTotalMixing" >
                                         </div>
                                     </div>
                                 </div>
@@ -231,12 +253,8 @@
                                                 <div class="input-group-prepend">
                                                     <button type="button" class="btn btn-primary btnSearchPoNo" title="Scan PO Code"><i class="fa fa-qrcode"></i></button>
                                                 </div>
-                                            <input type="text" class="form-control" name="person_incharge" placeholder="" id="txtPersonIncharge">
-                                            </div>
-                                        </div>
-                                        <div class="col-sm-6">
-                                            <label></label>
                                             <input type="text" class="form-control" name="qc_inspector" placeholder="" id="txtQCInspector">
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -280,56 +298,84 @@
     @endsection
 
     @section('js_content')
-        {{-- <script type="text/javascript">
-            let datatableProcesss;
-            let datatableStation;
+         <script>
+            let dtDHDMonitoring;
 
-            datatableProcesss = $("#tblDHDChecksheet").DataTable({
+            dtDHDMonitoring = $("#tblDHDMonitoring1").DataTable({
                 "processing" : true,
                 "serverSide" : true,
                 "ajax" : {
-                    url: "view_defectsinfo",
+                    url: "view_dhd_monitoring",
                 },
                 fixedHeader: true,
                 "columns":[
 
                     { "data" : "action", orderable:false, searchable:false },
-                    { "data" : "label" },
-                    { "data" : "station" },
-                    { "data" : "defects" }
+                    { "data" : "created_at" },
+                    { "data" : "dhd_no" },
+                    { "data" : "device_code" },
+                    { "data" : "device_name" },
+                    { "data" : "person_incharge" },
+                    { "data" : "qc_inspector" },
+                    { "data" : "remarks" }
                 ],
             });
-
-            $('#formDHD').submit(function(e){
+            $(document).ready(function(){
+                 $('#formDHDMonitoring').submit(function(e){
                 e.preventDefault();
-                $.ajax({
-                    type: "post",
-                    url: "add_defects",
-                    data: $('#formDHD').serialize(),
-                    dataType: "json",
-                    success: function (response) {
-                        if(response['result'] == 1){
-                            datatableProcesss.draw();
-                            $('#modalAddDHD').modal('hide');
-                        }
-                    }
-                });
+
+                console.log('sdfsdfsf');
+                // $.ajax({
+                //     type: "post",
+                //     url: "add_dhd_monitoring",
+                //     data: $('#formDHDMonitoring').serialize(),
+                //     dataType: "json",
+                //     success: function (response) {
+                //         if(response['result'] == 1){
+                //             dtDHDMonitoring.draw();
+                //             $('#modalAddDHD').modal('hide');
+                //         }
+                //     }
+                // });
+            });
+
+
             });
 
             $(document).on('click', '.btnEdit', function(e){
-                let pId = $(this).data('id');
+                let id = $(this).data('id');
                 $.ajax({
                     type: "get",
-                    url: "get_defects_by_id",
+                    url: "get_dhd_monitoring",
                     data: {
-                        "id" : pId
+                        "id" : id
                     },
                     dataType: "json",
                     success: function (response) {
 
                         $('#txtDHDId').val(response['id']);
-                        $('#selStation').val(response['station']);
-                        $('#txtDefectName').val(response['defects']);
+                        $('#txtDHDNo').val(response['dhd_no']);
+                        $('#txtDeviceName').val(response['device_name']);
+                        $('#txtDeviceCode').val(response['device_code']);
+                        $('#txtMaterialName').val(response['mtl_name']);
+                        $('#txtMaterialLotVirgin').val(response['mtl_lot_virgin']);
+                        $('#txtMaterialLotRecycle').val(response['mtl_lot_recycle']);
+                        $('#txtMaterialMixVirgin').val(response['mtl_mix_virgin']);
+                        $('#txtMaterialMixRecycle').val(response['mtl_mix_recycle']);
+                        $('#txtMaterialTotalMixing').val(response['mtl_ttl_mixing']);
+                        $('#txtMaterialDrySetting').val(response['mtl_dry_setting']);
+                        $('#txtMaterialDryActual').val(response['mtl_dry_actual']);
+                        $('#txtMaterialDryTimeIn').val(response['mtl_dry_timeIn']);
+                        $('#txtMaterialDryTimeOut').val(response['mtl_dry_timeOut']);
+                        $('#txtDHDAActualTemp').val(response['dhd_ashift_actual_temp']);
+                        $('#txtDHDAMtlLevel').val(response['dhd_ashift_mtl_level']);
+                        $('#txtDHDATime').val(response['dhd_ashift_time']);
+                        $('#txtDHDBActualTemp').val(response['dhd_bshift_actual_temp']);
+                        $('#txtDHDBMtlLevel').val(response['dhd_bshift_mtl_level']);
+                        $('#txtDHDBTime').val(response['dhd_bshift_time']);
+                        $('#txtPersonIncharge').val(response['person_incharge']);
+                        $('#txtQCInspector').val(response['qc_inspector']);
+                        $('#txtRemarks').val(response['remarks']);
 
                         $('#modalAddDHD').modal('show');
 
@@ -337,34 +383,11 @@
                 });
             });
 
-            $(document).on('click', '.btnDisable', function(e){
-                let pId = $(this).data('id');
+            $("#txtMaterialMixRecycle").keyup(function(){
+                $("#txtMaterialTotalMixing").val(parseInt($("#txtMaterialMixVirgin").val()) + parseInt($(this).val()));
+            });
 
-                Swal.fire({
-                    text: "Are you sure you want to disable this process",
-                    icon: "warning",
-                    showCancelButton: true,
-                    confirmButtonColor: "#3085d6",
-                    cancelButtonColor: "#d33",
-                    confirmButtonText: "Yes"
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            type: "post",
-                            url: "update_status",
-                            data: {
-                                "_token": "{{ csrf_token() }}",
-                                "id" : pId,
-                            },
-                            dataType: "json",
-                            success: function (response) {
-                            }
-                        });
-                    }
-                });
-
-            })
-        </script> --}}
+        </script>
     @endsection
 @endauth
 

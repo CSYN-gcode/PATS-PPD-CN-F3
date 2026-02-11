@@ -43,9 +43,31 @@ function UpdateMachineParamCheckingData(request_id, process_status, user_id, _to
 }
 
 
-function MachineParameterEdittingMode(){
-    $("#tbl_machine_param_chckng_reference .machine_param_checking_data").attr('disabled', false);
-    $("#tbl_machine_param_chckng .machine_param_checking_data").attr('disabled', false);
+function MachineParameterEdittingMode(data){
+    // $("#tbl_machine_param_chckng_reference .machine_param_checking_data").attr('disabled', false);
+    // $("#tbl_machine_param_chckng .machine_param_checking_data").attr('disabled', false);
+
+    $.ajax({
+        url: "get_dmrpqc_details_id",
+        method: "get",
+        data: data,
+        dataType: "json",
+        beforeSend(){
+            $("#tbl_machine_param_chckng_reference .machine_param_checking_data").attr('disabled', true);
+            $("#tbl_machine_param_chckng .engr_input").attr('disabled', true);
+            $("#tbl_machine_param_chckng .qc_input").attr('disabled', true);
+        },
+        success: function(response){
+            let machine_param_checking_details = response['machine_param_checking_details'];
+            console.log('p6', machine_param_checking_details);
+            if(machine_param_checking_details[0].status == 0){
+                $("#tbl_machine_param_chckng_reference .machine_param_checking_data").attr('disabled', false);
+                $("#tbl_machine_param_chckng .engr_input").attr('disabled', false);
+            }else if(machine_param_checking_details[0].status == 1){
+                $("#tbl_machine_param_chckng .qc_input").attr('disabled', false);
+            }
+        }
+    });
 }
 
 function MachineParameterViewingMode(){

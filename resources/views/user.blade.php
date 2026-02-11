@@ -275,9 +275,14 @@
                       <option value="8">PPC - Sr. Planner</option>
                       <option value="9">Engineer</option>
                       <option value="10">PPC - Clerk</option>
-                      <option value="11">Technician</option>
+                      <option value="11">Technician/Die Maintenance Engr</option>
                       <option value="12">Prod - Machine Operator</option>
                       <option value="13">Prod - Visual Inspection</option>
+                      <option value="13">Prod - Finishing</option>
+                      <option value="14">Process Engineer</option>
+                      <option value="15">Engineering Supervisor</option>
+                      <option value="16">PPD Manager</option>
+                      <option value="17">Packing Operator</option>
                       {{-- <option value="12">IPQC Inspector</option>
                       <option value="13">OQC Inspector</option> --}}
                     </select>
@@ -535,12 +540,13 @@
                       <option value="8">PPC - Sr. Planner</option>
                       <option value="9">Engineer</option>
                       <option value="10">PPC - Clerk</option>
-                      <option value="11">Technician</option>
+                      <option value="11">Technician/Die Maintenance Engr</option>
                       <option value="12">Prod - Machine Operator</option>
                       <option value="13">Prod - Visual Inspection</option>
-                      {{-- <option value="12">Prod - Visual Inspection</option> --}}
-                      {{-- <option value="12">IPQC Inspector</option>
-                      <option value="13">OQC Inspector</option> --}}
+                      <option value="13">Prod - Finishing</option>
+                      <option value="14">Process Engineer</option>
+                      <option value="15">Engineering Supervisor</option>
+                      <option value="16">PPD Manager</option>
                     </select>
                 </div>
 
@@ -552,8 +558,6 @@
                       {{-- <option value="2">Molding</option> --}}
                     </select>
                 </div>
-
-
 
                 <div class="form-group">
                         <input type="checkbox" name="with_oqc_stamp" id="chkAddUserWithOQCStamp">
@@ -696,9 +700,26 @@
                       return "PPC - Clerk";
                     }
                     else if (row.position == 11) {
-                      return "Technician";
+                      return "Technician/Die Maintenance Engr";
                     }
-
+                    else if (row.position == 12) {
+                      return "Prod - Machine Operator";
+                    }
+                    else if (row.position == 13) {
+                      return "Prod - Visual Inspection";
+                    }
+                    else if (row.position == 14) {
+                      return "Prod - Finishing";
+                    }
+                    else if (row.position == 15) {
+                      return "Process Engineer";
+                    }
+                    else if (row.position == 16) {
+                      return "Engineering Supervisor";
+                    }
+                    else if (row.position == 17) {
+                      return "PPD Manager";
+                    }
                   },
                 },
             },
@@ -713,11 +734,11 @@
                       return "N/A";
                     }
                     else if (row.section == 1) {
-                      return "Stamping";
-                    }
-                    else if (row.section == 2) {
                       return "Molding";
                     }
+                    // else if (row.section == 2) {
+                    //   return "Molding";
+                    // }
 
                   },
                 },

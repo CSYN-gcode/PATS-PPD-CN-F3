@@ -165,7 +165,7 @@ class IqcInspectionController extends Controller
         ->addColumn('action', function($row){
             $result = '';
             $result .= '<center>';
-            if($row->inspector == Auth::user()->id || Auth::user()->username =='mclegaspi'){
+            if($row->inspector == Auth::user()->id || Auth::user()->username =='mclegaspi' || Auth::user()->username =='cdcasuyon'){
                 $result .= "<button class='btn btn-info btn-sm mr-1' iqc-inspection-id='".$row->id."'id='btnEditIqcInspection' inspector='".$row->inspector."'><i class='fa-solid fa-pen-to-square'></i></button>";
             }
             $result .= '</center>';
@@ -218,9 +218,10 @@ class IqcInspectionController extends Controller
             return $result;
         })
         ->addColumn('qc_inspector', function($row){
-            // $qc_inspector = User::where('id',$row->inspector)->get();
-            $result = 'qc_inspector';
-            // $result .= $qc_inspector[0]->firstname .' '. $qc_inspector[0]->lastname;
+            $qc_inspector = User::where('id',$row->inspector)->get();
+            // $result = 'qc_inspector';
+            $result = '';
+            $result .= $qc_inspector[0]->firstname .' '. $qc_inspector[0]->lastname;
             return $result;
         })
         ->rawColumns(['action','status','app_ctrl_no','qc_inspector','time_inspected',])
@@ -339,7 +340,7 @@ class IqcInspectionController extends Controller
     public function saveIqcInspection(IqcInspectionRequest $request)
     {
         date_default_timezone_set('Asia/Manila');
-
+        DB::beginTransaction();
         try {
             $mod_lot_no = explode(',',$request->lotNo);
             $mod_defects = explode(',',$request->modeOfDefects);
@@ -347,8 +348,7 @@ class IqcInspectionController extends Controller
             $arr_sum_mod_lot_qty = array_sum($mod_lot_qty);
 
             if(isset($request->iqc_inspection_id)){ //Edit
-
-                $update_iqc_inspection = IqcInspection::where('id', $request->iqc_inspection_id)->update($request->validated());
+                IqcInspection::where('id', $request->iqc_inspection_id)->update($request->validated());
 
                 IqcInspection::where('id', $request->iqc_inspection_id)
                 ->update([
@@ -362,13 +362,22 @@ class IqcInspectionController extends Controller
                 /* All required fields is the $request validated, check the column is IqcInspectionRequest
                     NOTE: the name of fields must be match in column name
                 */
+                // //Commented By Clark 10/11/2024, due to iqc conflict, enabling saving even if there is duplicate lot number
+                $is_exist_iqc_inspection_lot_no = IqcInspection::where('whs_transaction_id', $request->whs_transaction_id)->exists();
+                if($is_exist_iqc_inspection_lot_no){
+                    DB::rollback();
+                    return response()->json( [ 'result' => 2 ] );
+                }
+                //Commented By Clark 10/11/2024
+
                 $create_iqc_inspection_id = IqcInspection::insertGetId($request->validated());
+
                 /*  All not required fields should to be inside the update method below
                     NOTE: the name of fields must be match in column name
                 */
-                // return 'true';
                 IqcInspection::where('id', $create_iqc_inspection_id)
                 ->update([
+                    'invoice_no' => $request->invoice_no,
                     'no_of_defects' => $arr_sum_mod_lot_qty,
                     'remarks' => $request->remarks,
                     'inspector' => Auth::user()->id,
@@ -424,9 +433,11 @@ class IqcInspectionController extends Controller
                     ]);
                 }
             }
+            DB::commit();
             return response()->json( [ 'result' => 1 ] );
         } catch (\Throwable $th) {
             throw $th;
+            DB::rollback();
         }
     }
 

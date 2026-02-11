@@ -44,6 +44,7 @@ function getMaterialProcessForInputs(process){
             let machineOption;
             let processOption;
             let stationOption;
+            let certUserOption;
             // $('#txtAddMatProcStep').val(response.count);
 
             materialOption += `<option value="N/A">N/A</option>`;
@@ -68,11 +69,16 @@ function getMaterialProcessForInputs(process){
                 stationOption += `<option value="${response.stations[w]['id']}">${response.stations[w]['station_name']}</option>`;
             }
 
+            for(let u = 0; u < response.users.length; u++){
+                certUserOption += `<option value="${response.users[u]['id']}">${response.users[u]['firstname'] +' '+ response.users[u]['lastname']}</option>`;
+            }
+
             $('#selAddMatProcMatName').html(materialOption);
 
             $('#selAddMatProcMachine').html(machineOption);
             $('#selAddMatProcProcess').html(processOption);
             $('#selAddMatStation').html(stationOption);
+            $('#selAddMatCertifiedUser').html(certUserOption);
 
             dataTableMatProcess.draw();
 
@@ -240,6 +246,9 @@ const GetMatProcByIdToEdit = (id, selectedDeviceName) => {
             $('#txtAddMatProcDeviceName').val(selectedDeviceName);
             $('#selAddMatProcMachine').val(response['matDetails']['machine_code']).trigger('change');
             $('#selAddMatProcProcess').val(response['matDetails']['process']).trigger('change');
+            console.log('split',response['matDetails']['station_details'][0]['cert_opt'].split(","));
+
+            $('#selAddMatCertifiedUser').val(response['matDetails']['station_details'][0]['cert_opt'].split(",")).trigger("change");
 
             // if(response['matDetails']['device_details']['process'] == 1){
 

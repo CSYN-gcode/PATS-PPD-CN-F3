@@ -21,12 +21,12 @@ function UpdateOqcInspection(){
                 toastr.error('Saving failed!')
 
                 if(response['error']['oqc_inspection_machine_no'] === undefined){
-                    $("#slctOqcInspectionMachineNo").removeClass('is-invalid')
-                    $("#slctOqcInspectionMachineNo").attr('title', '')
+                    $("#txtOqcInspectionMachineNo").removeClass('is-invalid')
+                    $("#txtOqcInspectionMachineNo").attr('title', '')
                 }
                 else{
-                    $("#slctOqcInspectionMachineNo").addClass('is-invalid');
-                    $("#slctOqcInspectionMachineNo").attr('title', response['error']['oqc_inspection_machine_no'])
+                    $("#txtOqcInspectionMachineNo").addClass('is-invalid');
+                    $("#txtOqcInspectionMachineNo").attr('title', response['error']['oqc_inspection_machine_no'])
                 }
 
                 if(response['error']['oqc_inspection_lot_no'] === undefined){
@@ -355,14 +355,16 @@ function GetOqcInspectionById(getPo,
             GetInspectionType($('.inspectionTypeDropdown'))
             GetInspectionLevel($('.inspectionLevelDropdown'))
             GetSeverityInspection($('.severityInspectionDropdown'))
-            GeMaterialCodeForMachineNo($('.machineNumberDropdown'),getMaterialCode)
         },
 
         success: function(response){
             let getInspector            = response['getInspector']
             let getOqcInspectionData    = response['getOqcInspectionData']
             let getProductionRuncardData = response['getProductionRuncardData']
-
+            let fiscalYear = response['fiscalYear']
+            let workWeek = response['workWeek']
+            
+            
             $('#txtOqcInspectionPoNo').val(getPo)
             $('#txtOqcInspectionPoQty').val(getPoQty)
             $('#txtOqcInspectionLotNo').val(getProdLotNo)
@@ -379,8 +381,7 @@ function GetOqcInspectionById(getPo,
             }
 
             if(getOqcInspectionData.length > 0){
-                $('#slctOqcInspectionMachineNo').val(getOqcInspectionData[0].machine_no)
-                // $('select[name="oqc_inspection_machine_no"]').val(getOqcInspectionData[0].machine_no)
+                $('#txtOqcInspectionMachineNo').val(getOqcInspectionData[0].machine_no)
                 $('#dateOqcInspectionApplicationDate').val(getOqcInspectionData[0].app_date)
                 $('#timeOqcInspectionApplicationTime').val(getOqcInspectionData[0].app_time)
                 $('#slctOqcInspectionProductCategory').val(getOqcInspectionData[0].prod_category)
@@ -467,40 +468,11 @@ function GetOqcInspectionById(getPo,
                 $('#txtOqcInspectionYield').val(percentage.toFixed(2)+'%')
             }else{
                 $('#txtOqcInspectionInspector').val(getInspector.firstname+' '+getInspector.lastname)
+                $('#txtOqcInspectionMachineNo').val(getProductionRuncardData[0].machine_no)
+                $('#txtOqcInspectionWorkWeek').val(workWeek)
+                $('#txtOqcInspectionFiscalYear').val(fiscalYear)
             }
         },
-    })
-}
-
-function GeMaterialCodeForMachineNo(cboElement, getMaterialCode){
-    let result = '<option value="">N/A</option>'
-    $.ajax({
-        url: "get_material_code_for_machine_no",
-        method: "get",
-        data: {
-            'getMaterialCode' : getMaterialCode
-        },
-        dataType: "json",
-
-        beforeSend: function(){
-            result = '<option value="" selected disabled> -- Loading -- </option>'
-            cboElement.html(result)
-        },
-        success: function(response){
-            let getDeviceNameForMachineNo = response['getDeviceNameForMachineNo'];
-            result = ''
-            if(getDeviceNameForMachineNo.machine_details.length > 0){
-                result = '<option selected disabled> --- Select --- </option>'
-                for(let index = 0; index < getDeviceNameForMachineNo.machine_details.length; index++){
-                    console.log('object: ', getDeviceNameForMachineNo.machine_details[index]);
-                    result += '<option value="' + getDeviceNameForMachineNo.machine_details[index].machine_name+'">'+ getDeviceNameForMachineNo.machine_details[index].machine_name+'</option>'
-                }
-            }
-            else{
-                result = '<option value="0" selected disabled> No record found </option>'
-            }
-            cboElement.html(result);
-        }
     })
 }
 

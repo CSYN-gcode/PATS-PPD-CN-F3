@@ -8,7 +8,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>PATS - PPD | Sign In</title>
+  <title>PATS PPD - F3| Sign In</title>
   <!-- Tell the browser to be responsive to screen width -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -20,7 +20,7 @@
   <div class="card" style="box-shadow: 1px 1px 50px black;">
     <br>
     <div class="login-logo">
-      <a href="{{ route('login') }}"><h2>Product Automated Traceability System <br><b>PPD-CN </b></h2></a>
+      <a href="{{ route('login') }}"><h2>Product Automated Traceability System <br><b>PPD-F3 </b></h2></a>
     </div>
     <div class="card-body login-card-body">
       <p class="login-box-msg">Sign in to start your session</p>
@@ -99,7 +99,7 @@
             },
             success: function(JsonObject){
                 if(JsonObject['result'] == 1){
-                    // console.log('login success pats_ppd', JsonObject['username']);
+                    console.log('login success pats_ppd_f3', JsonObject['username']);
                     SignInAdmin(JsonObject['username']); //CLARK ADMIN LOGIN RAPIDX
                     window.location = "dashboard";
                 }

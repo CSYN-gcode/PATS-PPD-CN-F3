@@ -1,7 +1,12 @@
+// $.fn.modal.Constructor.prototype.enforceFocus = function() {};
+
 $(document).ready(function () {
 
     let ActionDonePartsNoArr = [];
     let ActionDoneQuantityArr = [];
+
+    let ActionDonePartsNoArrF3 = [];
+    let ActionDoneQuantityArrF3 = [];
 
     // UPDATE STATUS OF DIESET REQUEST
     $(document).on('click', '.actionChangeStatusBtn', function(e){
@@ -112,6 +117,7 @@ $(document).ready(function () {
             'id' : id,
             'process_status' : process_status
         }
+
         GetUserIDBySession();
         GetDmrpqcDetails(data, 'updating');
         ProcessStatusDivControls(process_status); //show or hide parts by process status
@@ -144,13 +150,13 @@ $(document).ready(function () {
         }
 
         if(process_status == 6){//Machine Parameter Checking
-            MachineParameterEdittingMode();
+            MachineParameterEdittingMode(data);
         }else{
             MachineParameterViewingMode();
         }
 
         if(process_status == 7){//Specifications
-            SpecificationEdittingMode();
+            SpecificationEdittingMode(data);
         }else{
             SpecificationViewingMode();
         }
@@ -165,13 +171,14 @@ $(document).ready(function () {
     $("#idbtnSaveFrm").click(function(event){
         try {
             event.preventDefault();
+            let category = $('#txtCategory').val();
             let process_status = $('#txt_global_status').val();
             let request_id = $('#txt_global_dmrpqc_id').val();
             let user_id = $('#txt_user_id').val();
             let csrf_token = $('#csrf_token').val();
             if(process_status == ''){
                 console.log('process_status null');
-                AddDmrpqc();
+                AddDmrpqc($('#frm_prod_identification'));
             }else if(process_status == 2 || process_status == 3){
                 for(let index = 1; index <= $('#row_counter').val(); index++){
                     let parts_no = $('.dieset_condition_data[index="4.'+index+'"][name="parts_no"]').val();
@@ -201,6 +208,46 @@ $(document).ready(function () {
             toastr.error('An error occured!\n' + 'Data: ' + error);
         }
     });
+
+    // $("#idbtnFactory3SaveFrm").click(function(event){
+    //     try {
+    //         event.preventDefault();
+    //         let f3_process_status = $('#frm_prod_identification_f3 #txt_global_status').val();
+    //         let f3_request_id = $('#frm_prod_identification_f3  #txt_global_dmrpqc_id').val();
+    //         let f3_user_id = $('#frm_prod_identification_f3  #txt_user_id').val();
+    //         let f3_csrf_token = $('#frm_prod_identification_f3 #csrf_token').val();
+    //         if(f3_process_status == ''){
+    //             // console.log('f3_process_status null');
+    //             AddDmrpqc($('#frm_prod_identification_f3'));
+    //         }else if(f3_process_status == 2 || f3_process_status == 3){
+    //             for(let index = 1; index <= $('#row_counter').val(); index++){
+    //                 let parts_no_f3 = $('.dieset_condition_data[index="4.'+index+'"][name="parts_no"]').val();
+    //                 let quantity_f3 = $('.dieset_condition_data[index="4.'+index+'"][name="quantity"]').val();
+
+    //                 ActionDonePartsNoArrF3.push(parts_no_f3);
+    //                 ActionDoneQuantityArrF3.push(quantity_f3);
+    //             }
+    //             UpdateDiesetConditionData(ActionDonePartsNoArrF3, ActionDoneQuantityArrF3, f3_request_id, f3_process_status, f3_user_id, f3_csrf_token);
+    //             UpdateDiesetConditionCheckingData(f3_request_id, f3_process_status, f3_user_id, f3_csrf_token);
+    //         }
+    //         // else if(f3_process_status == 3){
+    //         //     UpdateDiesetConditionCheckingData(f3_request_id, f3_process_status, f3_user_id, f3_csrf_token);
+    //         // }
+    //         else if(f3_process_status == 4){
+    //             UpdateMachineSetupData(f3_request_id, f3_process_status, f3_user_id, f3_csrf_token);
+    //         }else if(f3_process_status == 5){
+    //             UpdateProdReqCheckingData(f3_request_id, f3_process_status, f3_user_id, f3_csrf_token);
+    //         }else if(f3_process_status == 6){
+    //             UpdateMachineParamCheckingData(f3_request_id, f3_process_status, f3_user_id, f3_csrf_token);
+    //         }else if(f3_process_status == 7){
+    //             UpdateSpecifications(f3_request_id, f3_process_status, f3_user_id, f3_csrf_token);
+    //         }else if(f3_process_status == 8){
+    //             UpdateCompletionActivity(f3_request_id, f3_process_status, f3_user_id, f3_csrf_token);
+    //         }
+    //     } catch (error) {
+    //         toastr.error('An error occured!\n' + 'Data: ' + error);
+    //     }
+    // });
 }); //Doc Ready End
 
 function require_if_unchecked(ClassName){
@@ -213,11 +260,23 @@ function require_if_unchecked(ClassName){
     }
 }
 
-function AddDmrpqc(){
+const errorHandlerDmrpqc = function(errors,formInput){
+    if(errors === undefined){
+        formInput.removeClass('is-invalid')
+        formInput.addClass('is-valid')
+        formInput.attr('title', '')
+    }else {
+        formInput.removeClass('is-valid')
+        formInput.addClass('is-invalid');
+        formInput.attr('title', errors[0])
+    }
+}
+
+function AddDmrpqc(formName) {
     $.ajax({
         url: "add_request",
         method: "post",
-        data: $('#frm_prod_identification').serialize(),
+        data: formName.serialize(),
         dataType: "json",
         beforeSend: function(){
             // $(".icon_save_pilotA").addClass('fa fa-spinner fa-pulse');
@@ -313,10 +372,75 @@ const GetDmrpqcDetails = (data, attr_mode = null) => {
                 let dieset_condition_checking_details = response['dieset_condition_checking_details'];
                 let machine_setup_details = response['machine_setup_details'];
                 let product_req_checking_details = response['product_req_checking_details'];
+                let prod_req_sub_details;
+
+                if(product_req_checking_details != ''){
+                    prod_req_sub_details = product_req_checking_details[0].prod_req_checking_details;
+                }else{
+                    prod_req_sub_details = '';
+                }
+
                 let machine_setup_sample_details = response['machine_setup_sample_details'];
                 let machine_param_checking_details = response['machine_param_checking_details'];
                 let specification_details = response['specification_details'];
                 let completion_activity_details = response['completion_activity_details'];
+
+                // PART 2 USER SELECTION
+                // GetSupervisorEngrUser('1,9,15,16,17', $("#selFabricatedBy")); //Internally Fabricated Parts(X) Fabricated By
+                // GetSupervisorEngrUser('1,9,15,16,17', $("#selValidatedBy")); //Internally Fabricated Parts(X) Validated By
+
+                // PART 4 USER SELECTION
+                if(machine_setup_details != ''){
+                    GetProductionUsers('1,4,12,13,14', $("#selProductionUser"), machine_setup_details[0].first_in_charged); //Machine Set-up 1st Adjustment (In-Charge)
+                    GetTechnicianUser('9,11,15', $("#selTechnicianUser"), machine_setup_details[0].second_in_charged); //Machine Set-up 2nd Adjustment (In-Charge)
+                    GetSupervisorEngrUser('1,9,15,16,17', $("#selSupervisorEngrUser"), machine_setup_details[0].third_in_charged); //Machine Set-up 3rd Adjustment (In-Charge)
+                }
+
+                // PART 5 USER SELECTION
+                if(prod_req_sub_details != ''){
+                    for (let index = 0; index < prod_req_sub_details.length; index++){
+                        if(prod_req_sub_details[index].process_category == 1){
+                            // $("#selProductionVisualUser").val(prod_req_sub_details[index].visual_insp_name).trigger('change');
+                                // $("#selProductionDimentionUser").val(prod_req_sub_details[index].dimension_insp_name).trigger('change');
+                            GetProductionUsers('1,4,12,13,14', $("#selProductionVisualUser"), prod_req_sub_details[index].visual_insp_name); // Production Visual Inspection
+                            // GetProductionUsers('1,4,12,13,14', $("#selProductionDimentionUser"), prod_req_sub_details[index].dimension_insp_name); // Production Dimension Inspection
+                            GetTechnicianUser('9,11,15', $("#selProductionDimentionUser"), prod_req_sub_details[index].dimension_insp_name); // Production Dimension Inspection
+                        }else if(prod_req_sub_details[index].process_category == 2){
+                            GetTechnicianUser('9,11,15', $("#selTechnicianVisualUser"), prod_req_sub_details[index].visual_insp_name); // Technician Visual Inspection
+                            GetTechnicianUser('9,11,15', $("#selTechnicianDimensionUser"), prod_req_sub_details[index].dimension_insp_name); // Technician Dimension Inspection
+                        }else if(prod_req_sub_details[index].process_category == 3){
+                            GetQcInspectorUser('2,5', $("#selQcVisualUser"), prod_req_sub_details[index].visual_insp_name); // QC Visual Inspection
+                            GetQcInspectorUser('2,5', $("#selQcDimensionUser"), prod_req_sub_details[index].dimension_insp_name); // QC Dimension Inspection
+                        }else if(prod_req_sub_details[index].process_category == 4){
+                            GetSupervisorEngrUser('1,9,15,16,17', $("#selEngrVisualUser"), prod_req_sub_details[index].visual_insp_name); // Process Engr Visual Inspection
+                            GetSupervisorEngrUser('1,9,15,16,17', $("#selEngrDimensionUser"), prod_req_sub_details[index].dimension_insp_name); // Process Engr Dimension Inspection
+                        }
+                    }
+                }
+
+                if(machine_setup_sample_details != ''){
+                    GetProductionUsers('1,4,12,13,14', $("#selMachineSetupSamplesPIC"), machine_setup_sample_details[0].pic); //For Machine Setup Sample (PIC)
+                    GetQcInspectorUser('2,5', $("#selMachineSetupSamplesQc"), machine_setup_sample_details[0].qc); //For Machine Setup Sample (QC)
+                    GetSupervisorEngrUser('1,9,15,16,17', $("#selMachineSetupSamplesEngr"), machine_setup_sample_details[0].engr); //For Machine Setup Sample (ENGR)
+                }
+
+                GetSupervisorEngrUser('1,9,15,16,17', $("#selPressureEngrUser"));
+                GetQcInspectorUser('2,5', $("#selPressureQCUser"));
+                GetSupervisorEngrUser('1,9,15,16,17', $("#selTempNozzleEngrUser"));
+                GetQcInspectorUser('2,5', $("#selTempNozzleQCUser"));
+                GetSupervisorEngrUser('1,9,15,16,17', $("#selTempMoldEngrUser"));
+                GetQcInspectorUser('2,5', $("#selTempMoldQCUser"));
+                GetSupervisorEngrUser('1,9,15,16,17', $("#selCtimeEngrUser"));
+                GetQcInspectorUser('2,5', $("#selCtimeQCUser"));
+
+                // SAMPLE SELECTION ONLY *FOR REVISION
+                GetProductionUsers('1,4,12,13,14', $("#selNgJudgedBy")); //For Specification (NG Judged By)
+                GetQcInspectorUser('2,5', $("#selOkVerifiedBy")); //For Specification (OK Verified By)
+                GetSupervisorEngrUser('1,9,15,16,17', $("#selSignedBy")); //For Specification (Signed By)
+
+                // PART 8 USER SELECTION
+                GetProductionUsers('1,4,12,13,14', $("#SelPreparedBy")); //For Specification (Prepared By)
+                GetProductionUsers('1,4,12,13,14', $("#SelCheckedBy")); //For Specification (Checked By)
 
                 $("#txt_global_dmrpqc_id").val(dmrpqc_details[0].id);
                 $("#txt_global_status").val(dmrpqc_details[0].process_status);
@@ -333,7 +457,7 @@ const GetDmrpqcDetails = (data, attr_mode = null) => {
                 $("#frm_txt_requested_by_id").val(dmrpqc_details[0].created_by.id);
                 $("#frm_txt_requested_by").val(dmrpqc_details[0].created_by.full_name);
 
-                // GetPPSDBDataByItemCode(dmrpqc_details[0].po_number);
+                GetPPSDBDataByItemCode(dmrpqc_details[0].po_number);
 
                     if(dieset_condition_details != ''){
                         if(dieset_condition_details[0].parts_drawing != undefined){
@@ -480,12 +604,13 @@ const GetDmrpqcDetails = (data, attr_mode = null) => {
                             $('#tbl_parts_no_and_qty tbody').append(html);
                         }
 
-                        $("#selFabricatedBy").val(dieset_condition_details[0].drawing_fabricated_by);
-                        $("#selValidatedBy").val(dieset_condition_details[0].drawing_validated_by);
+                        // $("#selFabricatedBy").val(dieset_condition_details[0].drawing_fabricated_by).trigger('change');
+                        // $("#selValidatedBy").val(dieset_condition_details[0].drawing_validated_by).trigger('change');
 
                         $("#frm_txt_details_of_activity").val(dieset_condition_details[0].details_of_activity);
                         $("#frm_txt_action_date_start").val(dieset_condition_details[0].action_done_date_start);
                         $("#frm_txt_action_start_time").val(dieset_condition_details[0].action_done_start_time);
+                        $("#frm_txt_action_date_finish").val(dieset_condition_details[0].action_done_date_finish);
                         $("#frm_txt_action_finish_time").val(dieset_condition_details[0].action_done_finish_time);
                         $("#frm_check_point_remarks").val(dieset_condition_details[0].check_point_remarks);
                         $("#frm_mold_check_remarks").val(dieset_condition_details[0].mold_check_remarks);
@@ -564,14 +689,22 @@ const GetDmrpqcDetails = (data, attr_mode = null) => {
                     }
 
                     if(machine_setup_details != ''){
-                        if(machine_setup_details[0].process_status == 1){
+                        console.log('if 0');
+                        if(machine_setup_details[0].process_status == 1 && machine_setup_details[0].status != 2){//1st Adjustment & Status != For Quali(Done)
+                            console.log('if 1');
                             $('#tbl_machine_setup .first_adjustment').prop('disabled', true);
                             $('#tbl_machine_setup .second_adjustment').prop('disabled', false);
                             $('#tbl_machine_setup .third_adjustment').prop('disabled', true);
-                        }else if(machine_setup_details[0].process_status == 2){
+                        }else if(machine_setup_details[0].process_status == 2 && machine_setup_details[0].status != 2){//2nd Adjustment & Status != For Quali(Done)
+                            console.log('elseif 1');
                             $('#tbl_machine_setup .first_adjustment').prop('disabled', true);
                             $('#tbl_machine_setup .second_adjustment').prop('disabled', true);
                             $('#tbl_machine_setup .third_adjustment').prop('disabled', false);
+                        }else{ //1st Adjustment & Status == For Quali(Done)
+                            console.log('elseif 1');
+                            $('#tbl_machine_setup .first_adjustment').prop('disabled', false);
+                            $('#tbl_machine_setup .second_adjustment').prop('disabled', true);
+                            $('#tbl_machine_setup .third_adjustment').prop('disabled', true);
                         }
 
                         if(machine_setup_details[0].first_adjustment == 1){
@@ -610,13 +743,13 @@ const GetDmrpqcDetails = (data, attr_mode = null) => {
                         $("#frm_txt_machine_setup_2nd_remarks").val(machine_setup_details[0].second_remarks);
                         $("#frm_txt_machine_setup_3rd_remarks").val(machine_setup_details[0].third_remarks);
                     }else{
+                        console.log('else 0');
                         $('#tbl_machine_setup .first_adjustment').prop('disabled', false);
                         $('#tbl_machine_setup .second_adjustment').prop('disabled', true);
                         $('#tbl_machine_setup .third_adjustment').prop('disabled', true);
                     }
 
                     if(product_req_checking_details != ''){
-                        let prod_req_details = product_req_checking_details[0].prod_req_checking_details;
                         let prchecking_production_arr  = [];
                         let prchecking_engr_tech_arr  = [];
                         let prchecking_lqc_arr  = [];
@@ -659,24 +792,24 @@ const GetDmrpqcDetails = (data, attr_mode = null) => {
                             $('#frm_txt_qc_date').val(machine_setup_sample_details[0].engr_datetime);
                             $('#frm_txt_engr_date').val(machine_setup_sample_details[0].qc_datetime);
 
-                            $('#selMachineSetupSamplesPIC').val(machine_setup_sample_details[0].pic);
-                            $('#selMachineSetupSamplesQc').val(machine_setup_sample_details[0].qc);
-                            $('#selMachineSetupSamplesEngr').val(machine_setup_sample_details[0].engr);
+                            // $('#selMachineSetupSamplesPIC').val(machine_setup_sample_details[0].pic);
+                            // $('#selMachineSetupSamplesQc').val(machine_setup_sample_details[0].qc);
+                            // $('#selMachineSetupSamplesEngr').val(machine_setup_sample_details[0].engr);
                         }
 
-                        for (let index = 0; index < prod_req_details.length; index++) {
-                            if(prod_req_details[index].process_category == 1){ //PRODUCTION
+                        for (let index = 0; index < prod_req_sub_details.length; index++) {
+                            if(prod_req_sub_details[index].process_category == 1){ //PRODUCTION
                                 prchecking_production_arr.push(
-                                    prod_req_details[index].eval_sample,
-                                    prod_req_details[index].japan_sample,
-                                    prod_req_details[index].last_prodn_sample,
-                                    prod_req_details[index].dieset_eval_report,
-                                    prod_req_details[index].cosmetic_defect,
-                                    prod_req_details[index].pingauges,
-                                    prod_req_details[index].measurescope,
-                                    prod_req_details[index].n_a,
-                                    prod_req_details[index].visual_insp_result,
-                                    prod_req_details[index].dimension_insp_result
+                                    prod_req_sub_details[index].eval_sample,
+                                    prod_req_sub_details[index].japan_sample,
+                                    prod_req_sub_details[index].last_prodn_sample,
+                                    prod_req_sub_details[index].dieset_eval_report,
+                                    prod_req_sub_details[index].cosmetic_defect,
+                                    prod_req_sub_details[index].pingauges,
+                                    prod_req_sub_details[index].measurescope,
+                                    prod_req_sub_details[index].n_a,
+                                    prod_req_sub_details[index].visual_insp_result,
+                                    prod_req_sub_details[index].dimension_insp_result
                                 );
 
                                 let prchecking_prod_index = 0;
@@ -698,28 +831,28 @@ const GetDmrpqcDetails = (data, attr_mode = null) => {
                                     prchecking_prod_index++;
                                 }
 
-                                $("#selProductionVisualUser").val(prod_req_details[index].visual_insp_name);
-                                $("#selProductionDimentionUser").val(prod_req_details[index].dimension_insp_name);
-                                $("#frm_txt_prod_visual_insp_datetime").val(prod_req_details[index].visual_insp_datetime);
-                                $("#frm_txt_prod_dimension_insp_datetime").val(prod_req_details[index].dimension_insp_datetime);
-                                $("#frm_txt_prod_actual_checking_remarks").val(prod_req_details[index].actual_checking_remarks);
+                                // $("#selProductionVisualUser").val(prod_req_sub_details[index].visual_insp_name).trigger('change');
+                                // $("#selProductionDimentionUser").val(prod_req_sub_details[index].dimension_insp_name).trigger('change');
+                                $("#frm_txt_prod_visual_insp_datetime").val(prod_req_sub_details[index].visual_insp_datetime);
+                                $("#frm_txt_prod_dimension_insp_datetime").val(prod_req_sub_details[index].dimension_insp_datetime);
+                                $("#frm_txt_prod_actual_checking_remarks").val(prod_req_sub_details[index].actual_checking_remarks);
 
-                            }else if(prod_req_details[index].process_category == 2){// ENGR TECHNICIAN
+                            }else if(prod_req_sub_details[index].process_category == 2){// ENGR TECHNICIAN
                                 // console.log('iconsole mo',product_req_checking_details[0].prod_req_checking_details);
 
                                 prchecking_engr_tech_arr.push(
-                                    prod_req_details[index].eval_sample,
-                                    prod_req_details[index].japan_sample,
-                                    prod_req_details[index].last_prodn_sample,
-                                    prod_req_details[index].material_drawing,
-                                    prod_req_details[index].insp_guide,
-                                    prod_req_details[index].dieset_eval_report,
-                                    prod_req_details[index].cosmetic_defect,
-                                    prod_req_details[index].pingauges,
-                                    prod_req_details[index].measurescope,
-                                    prod_req_details[index].n_a,
-                                    prod_req_details[index].visual_insp_result,
-                                    prod_req_details[index].dimension_insp_result
+                                    prod_req_sub_details[index].eval_sample,
+                                    prod_req_sub_details[index].japan_sample,
+                                    prod_req_sub_details[index].last_prodn_sample,
+                                    prod_req_sub_details[index].material_drawing,
+                                    prod_req_sub_details[index].insp_guide,
+                                    prod_req_sub_details[index].dieset_eval_report,
+                                    prod_req_sub_details[index].cosmetic_defect,
+                                    prod_req_sub_details[index].pingauges,
+                                    prod_req_sub_details[index].measurescope,
+                                    prod_req_sub_details[index].n_a,
+                                    prod_req_sub_details[index].visual_insp_result,
+                                    prod_req_sub_details[index].dimension_insp_result
                                 );
 
                                 let prchecking_engr_tech_index = 0;
@@ -741,29 +874,29 @@ const GetDmrpqcDetails = (data, attr_mode = null) => {
                                     prchecking_engr_tech_index++;
                                 }
 
-                                $("#frm_txt_engr_tech_material_drawing_no").val(prod_req_details[index].material_drawing_no);
-                                $("#frm_txt_engr_tech_material_rev_no").val(prod_req_details[index].material_rev_no);
-                                $("#frm_txt_engr_tech_insp_guide_drawing_no").val(prod_req_details[index].insp_guide_drawing_no);
-                                $("#frm_txt_engr_tech_insp_guide_rev_no").val(prod_req_details[index].insp_guide_rev_no);
-                                $("#selTechnicianVisualUser").val(prod_req_details[index].visual_insp_name);
-                                $("#selTechnicianDimensionUser").val(prod_req_details[index].dimension_insp_name);
-                                $("#frm_txt_engr_tech_visual_insp_datetime").val(prod_req_details[index].visual_insp_datetime);
-                                $("#frm_txt_engr_tech_dimension_insp_datetime").val(prod_req_details[index].dimension_insp_datetime);
-                                $("#frm_txt_engr_tech_actual_checking_remarks").val(prod_req_details[index].actual_checking_remarks);
-                            }else if(prod_req_details[index].process_category == 3){// LQC
+                                $("#frm_txt_engr_tech_material_drawing_no").val(prod_req_sub_details[index].material_drawing_no);
+                                $("#frm_txt_engr_tech_material_rev_no").val(prod_req_sub_details[index].material_rev_no);
+                                $("#frm_txt_engr_tech_insp_guide_drawing_no").val(prod_req_sub_details[index].insp_guide_drawing_no);
+                                $("#frm_txt_engr_tech_insp_guide_rev_no").val(prod_req_sub_details[index].insp_guide_rev_no);
+                                // $("#selTechnicianVisualUser").val(prod_req_sub_details[index].visual_insp_name);
+                                // $("#selTechnicianDimensionUser").val(prod_req_sub_details[index].dimension_insp_name);
+                                $("#frm_txt_engr_tech_visual_insp_datetime").val(prod_req_sub_details[index].visual_insp_datetime);
+                                $("#frm_txt_engr_tech_dimension_insp_datetime").val(prod_req_sub_details[index].dimension_insp_datetime);
+                                $("#frm_txt_engr_tech_actual_checking_remarks").val(prod_req_sub_details[index].actual_checking_remarks);
+                            }else if(prod_req_sub_details[index].process_category == 3){// LQC
                                 prchecking_lqc_arr.push(
-                                    prod_req_details[index].eval_sample,
-                                    prod_req_details[index].japan_sample,
-                                    prod_req_details[index].last_prodn_sample,
-                                    prod_req_details[index].material_drawing,
-                                    prod_req_details[index].insp_guide,
-                                    prod_req_details[index].dieset_eval_report,
-                                    prod_req_details[index].cosmetic_defect,
-                                    prod_req_details[index].pingauges,
-                                    prod_req_details[index].measurescope,
-                                    prod_req_details[index].n_a,
-                                    prod_req_details[index].visual_insp_result,
-                                    prod_req_details[index].dimension_insp_result
+                                    prod_req_sub_details[index].eval_sample,
+                                    prod_req_sub_details[index].japan_sample,
+                                    prod_req_sub_details[index].last_prodn_sample,
+                                    prod_req_sub_details[index].material_drawing,
+                                    prod_req_sub_details[index].insp_guide,
+                                    prod_req_sub_details[index].dieset_eval_report,
+                                    prod_req_sub_details[index].cosmetic_defect,
+                                    prod_req_sub_details[index].pingauges,
+                                    prod_req_sub_details[index].measurescope,
+                                    prod_req_sub_details[index].n_a,
+                                    prod_req_sub_details[index].visual_insp_result,
+                                    prod_req_sub_details[index].dimension_insp_result
                                 );
 
                                 let prchecking_lqc_index = 0;
@@ -785,30 +918,30 @@ const GetDmrpqcDetails = (data, attr_mode = null) => {
                                     prchecking_lqc_index++;
                                 }
 
-                                $("#frm_txt_lqc_material_drawing_no").val(prod_req_details[index].material_drawing_no);
-                                $("#frm_txt_lqc_material_rev_no").val(prod_req_details[index].material_rev_no);
-                                $("#frm_txt_lqc_insp_guide_drawing_no").val(prod_req_details[index].insp_guide_drawing_no);
-                                $("#frm_txt_lqc_insp_guide_rev_no").val(prod_req_details[index].insp_guide_rev_no);
-                                $("#selQcVisualUser").val(prod_req_details[index].visual_insp_name);
-                                $("#selQcDimensionUser").val(prod_req_details[index].dimension_insp_name);
-                                $("#frm_txt_lqc_visual_insp_datetime").val(prod_req_details[index].visual_insp_datetime);
-                                $("#frm_txt_lqc_dimension_insp_datetime").val(prod_req_details[index].dimension_insp_datetime);
-                                $("#frm_txt_lqc_actual_checking_remarks").val(prod_req_details[index].actual_checking_remarks);
+                                $("#frm_txt_lqc_material_drawing_no").val(prod_req_sub_details[index].material_drawing_no);
+                                $("#frm_txt_lqc_material_rev_no").val(prod_req_sub_details[index].material_rev_no);
+                                $("#frm_txt_lqc_insp_guide_drawing_no").val(prod_req_sub_details[index].insp_guide_drawing_no);
+                                $("#frm_txt_lqc_insp_guide_rev_no").val(prod_req_sub_details[index].insp_guide_rev_no);
+                                // $("#selQcVisualUser").val(prod_req_sub_details[index].visual_insp_name);
+                                // $("#selQcDimensionUser").val(prod_req_sub_details[index].dimension_insp_name);
+                                $("#frm_txt_lqc_visual_insp_datetime").val(prod_req_sub_details[index].visual_insp_datetime);
+                                $("#frm_txt_lqc_dimension_insp_datetime").val(prod_req_sub_details[index].dimension_insp_datetime);
+                                $("#frm_txt_lqc_actual_checking_remarks").val(prod_req_sub_details[index].actual_checking_remarks);
 
-                            }else if(prod_req_details[index].process_category == 4){// PROCESS ENGR
+                            }else if(prod_req_sub_details[index].process_category == 4){// PROCESS ENGR
                                 prchecking_process_engr_arr.push(
-                                    prod_req_details[index].eval_sample,
-                                    prod_req_details[index].japan_sample,
-                                    prod_req_details[index].last_prodn_sample,
-                                    prod_req_details[index].material_drawing,
-                                    prod_req_details[index].insp_guide,
-                                    prod_req_details[index].dieset_eval_report,
-                                    prod_req_details[index].cosmetic_defect,
-                                    prod_req_details[index].pingauges,
-                                    prod_req_details[index].measurescope,
-                                    prod_req_details[index].n_a,
-                                    prod_req_details[index].visual_insp_result,
-                                    prod_req_details[index].dimension_insp_result
+                                    prod_req_sub_details[index].eval_sample,
+                                    prod_req_sub_details[index].japan_sample,
+                                    prod_req_sub_details[index].last_prodn_sample,
+                                    prod_req_sub_details[index].material_drawing,
+                                    prod_req_sub_details[index].insp_guide,
+                                    prod_req_sub_details[index].dieset_eval_report,
+                                    prod_req_sub_details[index].cosmetic_defect,
+                                    prod_req_sub_details[index].pingauges,
+                                    prod_req_sub_details[index].measurescope,
+                                    prod_req_sub_details[index].n_a,
+                                    prod_req_sub_details[index].visual_insp_result,
+                                    prod_req_sub_details[index].dimension_insp_result
                                 );
 
                                 let prchecking_process_engr_index = 0;
@@ -830,15 +963,15 @@ const GetDmrpqcDetails = (data, attr_mode = null) => {
                                     prchecking_process_engr_index++;
                                 }
 
-                                $("#frm_txt_process_engr_material_drawing_no").val(prod_req_details[index].material_drawing_no);
-                                $("#frm_txt_process_engr_material_rev_no").val(prod_req_details[index].material_rev_no);
-                                $("#frm_txt_process_engr_insp_guide_drawing_no").val(prod_req_details[index].insp_guide_drawing_no);
-                                $("#frm_txt_process_engr_insp_guide_rev_no").val(prod_req_details[index].insp_guide_rev_no);
-                                $("#selEngrVisualUser").val(prod_req_details[index].visual_insp_name);
-                                $("#selEngrDimensionUser").val(prod_req_details[index].dimension_insp_name);
-                                $("#frm_txt_process_engr_visual_insp_datetime").val(prod_req_details[index].visual_insp_datetime);
-                                $("#frm_txt_process_engr_dimension_insp_datetime").val(prod_req_details[index].dimension_insp_datetime);
-                                $("#frm_txt_process_engr_actual_checking_remarks").val(prod_req_details[index].actual_checking_remarks);
+                                $("#frm_txt_process_engr_material_drawing_no").val(prod_req_sub_details[index].material_drawing_no);
+                                $("#frm_txt_process_engr_material_rev_no").val(prod_req_sub_details[index].material_rev_no);
+                                $("#frm_txt_process_engr_insp_guide_drawing_no").val(prod_req_sub_details[index].insp_guide_drawing_no);
+                                $("#frm_txt_process_engr_insp_guide_rev_no").val(prod_req_sub_details[index].insp_guide_rev_no);
+                                // $("#selEngrVisualUser").val(prod_req_sub_details[index].visual_insp_name);
+                                // $("#selEngrDimensionUser").val(prod_req_sub_details[index].dimension_insp_name);
+                                $("#frm_txt_process_engr_visual_insp_datetime").val(prod_req_sub_details[index].visual_insp_datetime);
+                                $("#frm_txt_process_engr_dimension_insp_datetime").val(prod_req_sub_details[index].dimension_insp_datetime);
+                                $("#frm_txt_process_engr_actual_checking_remarks").val(prod_req_sub_details[index].actual_checking_remarks);
                             }
                         }
                     }

@@ -314,11 +314,28 @@ $(document).ready(function () {
                         $("#txtAddFile").addClass('d-none');
                         $("#txtAddFile").removeAttr('required');
                         $("#txtEditUploadedFile").val(dieset_condition_details[0].parts_drawing);
-                        let drawing_specification = dieset_condition_details[0].drawing_specification.split(",");
-                        let drawing_actual_measurement = dieset_condition_details[0].drawing_actual_measurement.split(",");
 
-                        $("#selFabricatedBy").val(dieset_condition_details[0].drawing_fabricated_by);
-                        $("#selValidatedBy").val(dieset_condition_details[0].drawing_validated_by);
+                        let drawing_specification;
+                        let drawing_actual_measurement;
+                        // console.log('valuessssss', dieset_condition_details[0].drawing_specification);
+
+                        if(dieset_condition_details[0].drawing_specification !== null){
+                            drawing_specification = dieset_condition_details[0].drawing_specification.split(",");
+                        }else{
+                            drawing_specification = '';
+                        }
+
+                        if(dieset_condition_details[0].drawing_specification !== null){
+                            drawing_actual_measurement = dieset_condition_details[0].drawing_actual_measurement.split(",");
+                        }else{
+                            drawing_actual_measurement = '';
+                        }
+
+                        console.log('selFabricatedBy', dieset_condition_details[0].drawing_fabricated_by);
+                        console.log('selFabricatedBy',dieset_condition_details[0].drawing_validated_by);
+
+                        $("#selFabricatedBy").val(dieset_condition_details[0].drawing_fabricated_by).trigger('change');
+                        $("#selValidatedBy").val(dieset_condition_details[0].drawing_validated_by).trigger('change');
 
                         // if(dieset_condition_details[0].drawing_fabricated_by == null){
                         //     $("#frm_txt_fabricated_by_id").val($("#txt_user_id").val());

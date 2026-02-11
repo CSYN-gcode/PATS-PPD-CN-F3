@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use DataTables;
-use App\Models\Process;
+use App\Models\User;
 
+use App\Models\Process;
 use App\Models\Station;
 use App\Models\EEDMSMachine;
 use Illuminate\Http\Request;
@@ -101,13 +102,32 @@ class MaterialProcessController extends Controller
             }
             return $result;
         })
-        ->rawColumns(['action', 'mat_details', 'stat_details', 'mach_details'])
+        ->addColumn('operators_info', function($material_process_details){
+        // return $material_process_details->station_details;
+            $result = "";
+
+            if(count($material_process_details->station_details) > 0){
+                $operators = explode(",", $material_process_details->station_details[0]->cert_opt);
+                $users = User::whereIn('id', $operators)->get();
+
+                $fullNames = $users->map(function($user) {
+                return $user->firstname. ' ' . $user->lastname;
+                })->toArray();
+
+                $result = "<span class='badge bg-warning text-white'>".implode(", ", $fullNames)."</span>";
+            }
+
+
+            return $result;
+        })
+
+        ->rawColumns(['action', 'mat_details', 'stat_details', 'mach_details','operators_info'])
         ->make(true);
     }
 
     public function get_mat_proc_for_add(Request $request){
         $machine_details = DB::connection('mysql_rapid_eedms')
-        ->select('SELECT * FROM generallogistics WHERE machine_section = "PPS" AND machine_code = "MACHINE"');
+        ->select('SELECT * FROM generallogistics WHERE machine_section IN ("PPS", "Battery Connector") AND machine_code = "MACHINE"');
 
         // $material_details_warehouse_data = DB::connection('mysql_rapid_pps')
         // ->select('SELECT PartNumber AS code, MaterialType AS name FROM tbl_Warehouse');
@@ -157,11 +177,16 @@ class MaterialProcessController extends Controller
 
         $stations = Station::where('status', 0)->get();
 
+        $user_list = User::where('status', 1)->get();
+
+
         return response()->json([
             'machine_details'  => $machine_details,
             'material_details' => $merged_materials,
             'process'          => $process_details,
-            'stations'         => $stations
+            'stations'         => $stations,
+            'users'            => $user_list
+
         ]);
     }
 
@@ -185,12 +210,13 @@ class MaterialProcessController extends Controller
 
         date_default_timezone_set('Asia/Manila');
 
-        $data = $request->all();
+        $data = $request->all(); //cert_
 
         // return $data;
         $validation = array(
                 // 'name' => ['required', 'string', 'max:255', 'unique:devices'],
-                'process' => ['required', 'string', 'max:255']
+                'process' => ['required', 'string', 'max:255'],
+                'certified_user.0' => ['required', 'integer', 'min:1'],
         );
 
         $validator = Validator::make($data, $validation);
@@ -199,7 +225,7 @@ class MaterialProcessController extends Controller
             return response()->json(['result' => '0', 'error' => $validator->messages()]);
         }
         else{
-            DB::beginTransaction();
+            // DB::beginTransaction();
             try{
                 $mat_proc_array = array(
                     'step'      => $request->step,
@@ -317,30 +343,32 @@ class MaterialProcessController extends Controller
                 }
 
                 if(isset($request->station)){
+                    // return 'mat_proc_id';
                     if(is_array($request->station)){
                         for ($j=0; $j < count($request->station); $j++) {
                             MaterialProcessStation::insert([
                                 'mat_proc_id'   => $material_process_id,
                                 'station_id' => $request->station[$j],
+                                'cert_opt'      => implode(",", $request->certified_user),
                                 'created_at'    => NOW()
                             ]);
                         }
-                    }
-                    else{
+                    }else{ //107,108,109,111
                         MaterialProcessStation::insert([
                             'mat_proc_id'   => $material_process_id,
                             'station_id' => $request->station,
+                            'cert_opt'      => implode(",", $request->certified_user),
                             'created_at'    => NOW()
                         ]);
                     }
                 }
-                DB::commit();
+                // DB::commit();
                 return response()->json([
                     'result' => 1,
                     'msg'    => 'Transaction Successful'
                 ]);
             }catch(\Exception $e){
-                DB::rollback();
+                // DB::rollback();
                 return $e;
             }
         }

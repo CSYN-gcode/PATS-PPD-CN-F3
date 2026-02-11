@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -69,7 +69,7 @@ class OQCInspectionController extends Controller
             if(count($get_oqc_inspection_per_row) > 1){
                 if($get_oqc_inspection_per_row[0]->lot_accepted == 0){
                     $result .= '
-                    <button class="btn btn-dark btn-sm text-center
+                    <button disabled class="btn btn-dark btn-sm text-center
                         actionEditOqcInspection"
                         oqc_inspection-id="' . $oqc_inspection_id . '"
                         prod-id="' . $prod_info->id . '"
@@ -83,7 +83,7 @@ class OQCInspectionController extends Controller
                         data-bs-keyboard="false"
                         title="Edit">
                         <i class="nav-icon fa fa-edit"></i>
-                    </button>&nbsp;';
+                    </button >&nbsp;';
                 }
 
                 $result .= '
@@ -122,7 +122,7 @@ class OQCInspectionController extends Controller
                         </button>&nbsp;';
                 }else{
                     $result .= '
-                    <button class="btn btn-dark btn-sm text-center
+                    <button disabled class="btn btn-dark btn-sm text-center
                         actionEditOqcInspection"
                         oqc_inspection-id="' . $oqc_inspection_id . '"
                         prod-id="' . $prod_info->id . '"
@@ -445,17 +445,14 @@ class OQCInspectionController extends Controller
         }
     }
 
-    public function getMaterialCodeForMachineNo(Request $request){
-        $get_device = Devices::with(
-            'material_process.machine_details'
-        )
-        ->where('name', $request->getMaterialCode)
-        ->get();
-        for ($i=0; $i < count($get_device[0]->material_process); $i++) {
-            if($get_device[0]->material_process[$i]->step == 1 && $get_device[0]->material_process[$i]->process == 2){
-                return response()->json(['getDeviceNameForMachineNo'  => $get_device[0]->material_process[$i]]);
-            }
-        }
+    public function prodnRuncardDetails(Request $request){
+        date_default_timezone_set('Asia/Manila');
+
+        $get_production_runcard_details = ProductionRuncard::where('po_number', $request->getPoNo)->whereNull('deleted_at')->orderBy('id', 'DESC')->first();
+
+        return response()->json([
+            'getProductionRuncardDetails'    =>  $get_production_runcard_details,
+        ]);
     }
 
     public function getFamily(){
@@ -497,6 +494,8 @@ class OQCInspectionController extends Controller
         date_default_timezone_set('Asia/Manila');
 
         $get_inspector = Auth::user();
+        $date_today = Carbon::today();
+
         $get_production_runcard_data = ProductionRuncard::where('id', $request->getProdId)
         ->get();
 
@@ -509,10 +508,25 @@ class OQCInspectionController extends Controller
         ->where('logdel', 0)
         ->get();
 
+        if ($date_today->month >= 4) {
+            $start_fiscal_year = Carbon::create($date_today->year, 4, 1);
+            $end_fiscal_year = Carbon::create($date_today->year + 1, 3, 31);
+            $fiscal_year = $date_today->year;
+        } else {
+            $start_fiscal_year = Carbon::create($date_today->year - 1, 4, 1);
+            $end_fiscal_year = Carbon::create($date_today->year, 3, 31);
+            $fiscal_year = $date_today->year - 1;
+        }
+    
+        $fy_ww = $date_today->diffInDays($start_fiscal_year);
+        $work_week = intdiv($fy_ww, 7);
+
         return response()->json([
             'getInspector'              => $get_inspector,
             'getOqcInspectionData'      => $get_oqc_inspection_data,
-            'getProductionRuncardData'   => $get_production_runcard_data
+            'getProductionRuncardData'  => $get_production_runcard_data,
+            'fiscalYear'                => $fiscal_year,
+            'workWeek'                  => $work_week
         ]);
     }
 

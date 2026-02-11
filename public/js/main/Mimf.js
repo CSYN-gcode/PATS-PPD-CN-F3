@@ -391,6 +391,39 @@ function CreateUpdateMimfPpsRequest(){
     })
 }
 
+function GetMimfPpsRequestById(mimfPpsRequestID){
+	$.ajax({
+        url: "get_mimf_pps_request_by_id",
+        method: "get",
+        data: {
+            'mimfPpsRequestID'  :   mimfPpsRequestID,
+        },
+        dataType: "json",
+        beforeSend: function(){
+            GetPpdMaterialType($('.get-mimf-device'))
+        },
+
+        success: function(response){
+            let getMimfPpsRequestToEdit = response['getMimfPpsRequestToEdit']
+            if(getMimfPpsRequestToEdit.length > 0){
+                setTimeout(() => {
+                    $('#txtPpsWhseId').val(getMimfPpsRequestToEdit[0].pps_whse_id)
+                    $("select[name='mimf_material_type']").val(getMimfPpsRequestToEdit[0].material_type)
+                    $("input[name='mimf_material_code']").val(getMimfPpsRequestToEdit[0].material_code)
+                }, 1000);
+                $('#txtMimfQuantityFromInventory').val(getMimfPpsRequestToEdit[0].qty_invt)
+                $('#txtMimfNeededKgs').val(getMimfPpsRequestToEdit[0].needed_kgs)
+                $('#txtRequestQuantity').val(getMimfPpsRequestToEdit[0].request_qty)
+                $('#txtMimfRequestPinsPcs').val(getMimfPpsRequestToEdit[0].request_pins_pcs)
+                $('#txtMimfVirginMaterial').val(getMimfPpsRequestToEdit[0].virgin_material)
+                $('#txtMimfRecycled').val(getMimfPpsRequestToEdit[0].recycled)
+                $('#dateMimfProdn').val(getMimfPpsRequestToEdit[0].prodn)
+                $('#dateMimfDelivery').val(getMimfPpsRequestToEdit[0].delivery)
+                $('#txtMimfRemark').val(getMimfPpsRequestToEdit[0].remarks)
+            }
+        },
+    })
+}
 
 
 

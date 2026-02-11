@@ -17,7 +17,7 @@ class ProductionRuncard extends Model
     }
 
     public function runcard_station(){
-        return $this->hasMany(ProductionRuncardStation::class, 'prod_runcards_id', 'id');
+        return $this->hasMany(ProductionRuncardStation::class, 'prod_runcards_id', 'id')->whereNull('deleted_at');
     }
 
     // public function assembly_ipqc(){
@@ -28,4 +28,7 @@ class ProductionRuncard extends Model
         return $this->hasOne(OqcInspection::class,'production_runcard_id', 'id')->orderBy('id', 'DESC')->where('logdel', 0);
     }
 
+    public function delivery_update_details(){
+        return $this->hasOne(DeliveryUpdate::class, 'runcard_id', 'id')->where('logdel', 0);
+    }
 }

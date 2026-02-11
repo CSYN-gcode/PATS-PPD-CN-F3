@@ -36,10 +36,42 @@ function UpdateSpecifications(request_id, process_status, user_id, _token){
     });
 }
 
-function SpecificationEdittingMode(){
-    $("#tblSpecificationsNGResult .specification_data").attr('disabled', false);
-    $("#tblSpecificationsOKResult .specification_data").attr('disabled', false);
-    $("#tblEngrHeadConformance .specification_data").attr('disabled', false);
+function SpecificationEdittingMode(data){
+    $.ajax({
+        url: "get_dmrpqc_details_id",
+        method: "get",
+        data: data,
+        dataType: "json",
+        beforeSend(){
+            $("#tblSpecificationsNGResult .specification_data").attr('disabled', true);
+            $("#tblSpecificationsOKResult .specification_data").attr('disabled', true);
+            $("#tblEngrHeadConformance .specification_data").attr('disabled', true);
+        },
+        success: function(response){
+            let specification_details = response['specification_details'];
+            let product_req_checking_details = response['product_req_checking_details'];
+            let prod_req_sub_details = product_req_checking_details[0].prod_req_checking_details;
+            let ng_status_count = 0;
+            for (let index = 0; index < prod_req_sub_details.length; index++) {
+                if(prod_req_sub_details[index].visual_insp_result == '0' || prod_req_sub_details[index].dimension_insp_result == '0'){
+                    ng_status_count++;
+                }
+            }
+            console.log('ng count', ng_status_count);
+
+            // if part 5 is NG go to part 7 NG result section
+            // otherwise go to part 7 OK result section
+            if(ng_status_count > 0){
+                $('#tblSpecificationsNGResult .specification_data').prop('disabled', false);
+                $("#tblEngrHeadConformance .specification_data").attr('disabled', false);
+                $("#tblSpecificationsOKResult .specification_data").attr('disabled', true);
+            }else{
+                $("#tblSpecificationsOKResult .specification_data").attr('disabled', false);
+                $('#tblSpecificationsNGResult .specification_data').prop('disabled', true);
+                $("#tblEngrHeadConformance .specification_data").attr('disabled', true);
+            }
+        }
+    });
 }
 
 function SpecificationViewingMode(){

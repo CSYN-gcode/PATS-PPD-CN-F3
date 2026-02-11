@@ -2,8 +2,8 @@
 <script src="{{ asset('public/template/jquery/js/jquery.min.js') }}"></script>
 
 <!-- Bootstrap 5 -->
-<script src="{{ asset('public/template/bootstrap/js/bootstrap.min.js') }}"></script>
 <script src="{{ asset('public/template/bootstrap/js/popper.min.js') }}"></script>
+<script src="{{ asset('public/template/bootstrap/js/bootstrap.min.js') }}"></script>
 
 <!-- AdminLTE -->
 <script src="{{ asset('public/template/adminlte/js/adminlte.min.js') }}"></script>
@@ -31,11 +31,19 @@
 
 <script src="{{ asset('public/template/moment/moment.min.js') }}"></script>
 
+<!-- Choices.js CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+<!-- Choices.js JS -->
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+<!-- Tom Select CSS -->
+{{-- <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<!-- Tom Select JS -->
+<script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script> --}}
 
 <script src="{{ asset('public/template/jquerymask/js/jquery.mask.min.js') }}"></script> <!-- Only use for Second Molding -->
 <script src="{{ asset('public/template/jquerytimepicker/js/jquery.timepicker.js') }}"></script> <!-- Only use for Second Molding -->
 <script src="{{ asset('public/template/thirsttrap/js/thirsttrap2.js') }}"></script> <!-- Only use for Second Molding -->
-
 
 <!-- Custom JS -->
 <script>
@@ -59,13 +67,18 @@
     };
 </script>
 
+<script src="@php echo asset("public/js/main/Shipment.js?".date("YmdHis")) @endphp"></script>
+
+<script src="@php echo asset("public/js/main/AssemblyFVI.js?".date("YmdHis")) @endphp"></script>
+
 <script src="@php echo asset("public/js/main/Common.js?".date("YmdHis")) @endphp"></script>
-<script src="{{ asset('public/js/main/User.js') }}"></script>
+<script src="@php echo asset("public/js/main/User.js?".date("YmdHis")) @endphp"></script>
 
 <script src="@php echo asset("public/js/main/UserLevel.js?".date("YmdHis")) @endphp"></script>
 <script src="@php echo asset("public/js/main/ProductionRuncard.js?".date("YmdHis")) @endphp"></script>
 <script src="@php echo asset("public/js/main/Qualifications.js?".date("YmdHis")) @endphp"></script>
 <script src="@php echo asset("public/js/main/OqcInspection.js?".date("YmdHis")) @endphp"></script>
+<script src="@php echo asset("public/js/main/DhdMonitoring.js?".date("YmdHis")) @endphp"></script>
 
 <script src="@php echo asset("public/js/main/Device.js?".date("YmdHis")) @endphp"></script>
 <script src="@php echo asset("public/js/main/MaterialProcess.js?".date("YmdHis")) @endphp"></script>
@@ -86,6 +99,8 @@
 
 <script src="@php echo asset("public/js/main/OqcInspection.js?".date("YmdHis")) @endphp"></script>
 <script src="{{ asset('public/template/jquerymask/js/jquery.mask.min.js') }}"></script> <!-- Only use for Second Molding -->
+
+<script src="@php echo asset("public/js/main/RapidPreShipment.js?".date("YmdHis")) @endphp"></script>
 
 {{-- <script src="{{ asset('public/js/main/OqcInspection.js') }}"></script> --}}
 
@@ -119,7 +134,7 @@
 
 {{-- PPC --}}
 <script src="@php echo asset("public/js/main/Mimf.js?".date("YmdHis")) @endphp"></script>
-
+<script src="@php echo asset("public/js/main/MimfV2.js?".date("YmdHis")) @endphp"></script>
 
 {{-- PressStampingMachineChecksheet --}}
 {{-- <script src="@php echo asset("public/js/main/PressStampingMachineChecksheet.js?".date("YmdHis")) @endphp"></script> --}}
@@ -129,6 +144,7 @@
 
 {{-- <script src="@php echo asset("public/js/main/MachineParameter.js?".date("YmdHis")) @endphp"></script> --}}
 
+<script src="@php echo asset("public/js/main/DeliveryUpdate.js?".date("YmdHis")) @endphp"></script>
 
 
 

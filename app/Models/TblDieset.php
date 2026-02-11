@@ -20,7 +20,7 @@ class TblDieset extends Model
     }
 
     public function ppd_matrix_info(){
-        return $this->hasOne(Devices::class, 'name','DeviceName');
+        return $this->hasOne(Devices::class, 'code','R3Code');
     }
 
 }

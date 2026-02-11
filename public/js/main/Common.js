@@ -220,8 +220,6 @@ const errorHandler = function (errors,formInput){
     }
 }
 
-
-
 // validateUser1 = function(userId, validPosition){ // this function will accept scanned id and validPosition based on user table (number only)
 //     console.log('validPosition', validPosition);
 //     $.ajax({

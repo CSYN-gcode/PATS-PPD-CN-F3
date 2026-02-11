@@ -39,8 +39,9 @@ function GetPPSDBDataByItemCode(po_number){
         success: function(response){
             if (response['result'] == '1') {
                 toastr.error('Error, Wrong PO Number');
+            }else if(response['result'] == '2'){
+                toastr.warning('Device Name is not found in DMCMSV2, please add device first.');
             }else{
-                // let pps_details = response['pps_db_details'];
                 let pps_db_data = response['pps_db_details'][0];
                 let device_details = response['device_details'];
                 let shots_details = response['shots_details'];
@@ -53,18 +54,25 @@ function GetPPSDBDataByItemCode(po_number){
                 $("#frm_txt_drawing_no").val(pps_db_data.drawing_no);
                 $("#frm_txt_rev_no").val(pps_db_data.drawing_rev);
 
-                $("#frm_txt_prev_shots").val(shots_details.s_count);
-                $("#frm_txt_prev_shot_accum").val(shots_accum.ttl_accum_shots);
-                $("#frm_txt_prev_maint_cycle").val(device_details.md_maintenance_cycle);
-                $("#frm_txt_prev_machine_no").val(shots_details.s_machine);
+                if(shots_details.approval_status == 0){
+                    $("#frm_txt_prev_shots").val('FOR APPROVAL');
+                    $("#frm_txt_prev_shot_accum").val('FOR APPROVAL');
+                    $("#frm_txt_prev_machine_no").val('FOR APPROVAL');
+                }else{
+                    $("#frm_txt_prev_shots").val(shots_details.shot);
+                    $("#frm_txt_prev_shot_accum").val(shots_accum.ttl_accum_shots);
+                    $("#frm_txt_prev_machine_no").val(shots_details.machine_no);
+                }
+
+                $("#frm_txt_prev_maint_cycle").val(device_details.maint_cycle);
             }
         }
     });
 }
 
 function ProductIdentificatioViewingMode(){
-        //Part 1 Disable Buttons
-        $("#frm_txt_po_no").attr('disabled', true);
-        $("#frm_request_type").attr('disabled', true);
-        $("#frm_prod_identification")[0].reset();
+    //Part 1 Disable Buttons
+    $("#frm_txt_po_no").attr('disabled', true);
+    $("#frm_request_type").attr('disabled', true);
+    $("#frm_prod_identification")[0].reset();
 }

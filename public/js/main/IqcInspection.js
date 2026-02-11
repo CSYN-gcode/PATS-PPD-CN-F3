@@ -253,7 +253,7 @@
                 /*Mode of Defects Modal*/
                 $('#mod_lot_no').empty().prepend(`<option value="" selected disabled>-Select-</option>`)
                 $('#mod_quantity').empty().prepend(`<option value="" selected disabled>-Select-</option>`)
-                for (let i = 0; i < response.length; i++) {
+                for (let i = 0; i < response.length; i++){
                     let optLotNo = `<option value="${lotNo}">${lotNo}</option>`;
                     $('#mod_lot_no').append(optLotNo);
                 }
@@ -508,6 +508,9 @@
                         timer: 1500
                     });
                     $('#modalScanQRSave').modal('hide');
+                }
+                if (response['result'] === 2){
+                    toastr.error(`Saving Failed, Lot Number is already exist`);
                 }
             },error: function (data, xhr, status){
                 let errors = data.responseJSON.errors ;

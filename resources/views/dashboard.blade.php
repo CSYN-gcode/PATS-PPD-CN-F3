@@ -51,7 +51,7 @@
                               <div class="row">
 
                                   <div class="col-12">
-                                      <h1> Welcome to Product Automated Traceabilty System (PATS) <br> for PPD-CN </h1>
+                                      <h1> Welcome to Product Automated Traceabilty System (PATS) <br> for PPD-F3 </h1>
                                   </div>
                                   <div class="col-12">
                                       <h5><br> For concerns/issues, please contact ISS at local numbers 205, 206, or 208.

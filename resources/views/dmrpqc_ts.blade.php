@@ -5,6 +5,38 @@
     @extends($layout)
     @section('title', 'DMRPQC (PPS-TS)')
     @section('content_page')
+    <style>
+        .select2-container--bootstrap-5 .select2-selection{
+            /* .input-group .select2-container--bootstrap-5 .select2-selection{ */
+            /* .select2-selection .select2-selection--single { */
+            min-height: calc(1.9rem + 2px) !important;
+            font-size: 0.875rem !important;
+            /* min-height: calc(1.9rem + 2px) !important;
+            height: calc(1.9rem + 2px) !important;
+            line-height: normal !important;
+            font-size: 0.875rem !important; */
+        }
+
+        .input-group .select2-container--bootstrap-5 .select2-selection{
+            height: calc(1.9rem + 2px) !important;
+            font-size: 0.875rem !important;
+        }
+
+        /* .input-group .select2-container--bootstrap-5 .select2-dropdown { */
+            /* position: absolute !important;
+            top: 100% !important;
+            left: 0 !important;
+            width: 100% !important;
+            z-index: 1051 !important;
+        } */
+
+        table.dataTable td {
+            font-size:  1em;
+            /* padding:    5px 5px !important; */
+            text-align: center;
+        }
+
+    </style>
     <div class="content-wrapper">
         <section class="content-header">
           <div class="container-fluid">
@@ -20,46 +52,112 @@
           <div class="container-fluid">
             <div class="row">
               <div class="col-md-12">
-                <div class="card card-primary">
+                <div class="card card-dark">
                     <div class="card-header">
                         <h3 class="card-title">Die-set Maintenance Preparation Requests</h3>
-                        <button class="btn btn-dark btn-sm" style="float: right;" id="btnShowAddRequest"><i class="fa fa-plus"></i> New Prepartion Request</button>
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <div class="float-sm-left mb-4 col-1">
-                                <button class="btn btn-info btn-outline-dark border-0" data-bs-toggle="modal" data-bs-target="#modalAdvancedSearch" id=""><i class="fas fa-search fa-md"></i> Advanced Search</button>
-                            </div>
+                            <div style="float: right;">
+                                <button class="btn btn-dark btnx-sm" style="float: right;" id="btnShowAddRequest"><i class="fa fa-plus"></i> New Prepartion Request</button>
+                            </div> <br><br>
 
-                            <div class="float-sm-left mb-4 col-2">
-                                {{-- <form id="frmSearchYear" class="form-inline"> --}}
+                            <div class="text-left mt-4 d-flex flex-row">
+                                {{-- <div class="text-left mt-4 d-flex flex-row">
+                                    <div class="form-group ml-3 col-2">
+                                        <label><strong>Fiscal Year :</strong></label>
+                                        <select class="form-control select2bs4 selectYearEnergy" name="fiscal_year"
+                                            id="selFiscalYearEnergy" style="width: 100%;">
+                                            <!-- Code generated -->
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group ml-3 col-2">
+                                        <label><strong>Month :</strong></label>
+                                        <select class="form-control select2bs4 selectMonthInkSG" name="month_value"
+                                            id="selMonthInkSG" style="width: 100%;">
+                                            <option value="0" disabled selected>Select Month</option>
+                                            <option value="" >All</option>
+                                            <option value="January">January</option>
+                                            <option value="February">February</option>
+                                            <option value="March">March</option>
+                                            <option value="April">April</option>
+                                            <option value="May">May</option>
+                                            <option value="June">June</option>
+                                            <option value="July">July</option>
+                                            <option value="August">August</option>
+                                            <option value="September">September</option>
+                                            <option value="October">October</option>
+                                            <option value="November">November</option>
+                                            <option value="December">December</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group ml-3 col-2">
+                                        <label><strong>Department :</strong></label>
+                                        <select class="form-control select2bs4 selectDepartment" name="department_value"
+                                            id="selDepartment" style="width: 100%;">
+                                            <option value="0" disabled selected>Select Department</option>
+                                            <option value="">All</option>
+                                            <option value="1">BOD</option>
+                                            <option value="2">IAS</option>
+                                            <option value="3">FIN</option>
+                                            <option value="4">HRD</option>
+                                            <option value="5">ESS</option>
+                                            <option value="6">LOG</option>
+                                            <option value="7">FAC</option>
+                                            <option value="8">ISS</option>
+                                            <option value="9">QAD</option>
+                                            <option value="10">EMS</option>
+                                        </select>
+                                    </div>
+                                </div> --}}
+                                <div class="form-group ml-3 col-2">
+                                    @php
+                                        $factory = request()->query('factory', 'F1'); // default to F1 if not set
+                                    @endphp
+
+                                    <label><strong>Category : &nbsp;</strong></label>
+                                    {{-- <input type="text" id="" class="form-control form-control-sm" name="" value="Factory 1" readonly> --}}
+                                    <!-- Hidden input for backend -->
+                                    {{-- <input type="hidden" name="factory" id="txtFactory" value="{{ $factory }}"> --}}
+
+                                    <!-- Or selectable if user can switch -->
+                                    <select id="factorySelect" class="form-control form-control-sm select2bs5" name="factory" disabled>
+                                        <option value="1" {{ $factory == 'F1' ? 'selected' : '' }}>Factory 1</option>
+                                        <option value="2" {{ $factory == 'F3' ? 'selected' : '' }}>Factory 3</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group ml-3 col-2">
                                     <label><strong>Filter Year : &nbsp;</strong></label>
-                                    <input type="text" id="SearchYear" class="form-control" name="year" title="<?php echo date('Y'); ?>" value="<?php echo date('Y'); ?>">
+                                    <input type="text" id="SearchYear" class="form-control form-control-sm" name="year" title="<?php echo date('Y'); ?>" value="<?php echo date('Y'); ?>">
+                                </div>
 
-                                    {{-- <button class="btn btn-primary" type="submit">Search</button> --}}
-                                {{-- </form> --}}
+                                <div class="form-group ml-3 col-2">
+                                    <label><strong>Month :</strong></label>
+                                    <select class="form-control form-control-sm selectMonth select2bs5" name="month_value" id="SelectMonth">
+                                        <option value="<?php echo date('m'); ?>" readonly><?php echo date('F'); ?></option><!-- selected -->
+                                        <option value="" selected>All</option>
+                                        <option value="01">January</option>
+                                        <option value="02">February</option>
+                                        <option value="03">March</option>
+                                        <option value="04">April</option>
+                                        <option value="05">May</option>
+                                        <option value="06">June</option>
+                                        <option value="07">July</option>
+                                        <option value="08">August</option>
+                                        <option value="09">September</option>
+                                        <option value="10">October</option>
+                                        <option value="11">November</option>
+                                        <option value="12">December</option>
+                                    </select>
+                                </div>
 
-                            {{-- <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalAdvancedSearch" id=""><i class="fas fa-search fa-md"></i> Advanced Search</button> --}}
-                            </div>
-
-                            <div class="float-sm-left mb-3 col-2">
-                                <label><strong>Month :</strong></label>
-                                <select class="form-control selectMonth" name="month_value" id="SelectMonth">
-                                    <option value="<?php echo date('m'); ?>" readonly><?php echo date('F'); ?></option><!-- selected -->
-                                    <option value="" selected>All</option>
-                                    <option value="01">January</option>
-                                    <option value="02">February</option>
-                                    <option value="03">March</option>
-                                    <option value="04">April</option>
-                                    <option value="05">May</option>
-                                    <option value="06">June</option>
-                                    <option value="07">July</option>
-                                    <option value="08">August</option>
-                                    <option value="09">September</option>
-                                    <option value="10">October</option>
-                                    <option value="11">November</option>
-                                    <option value="12">December</option>
-                                </select>
+                                <div class="form-group ml-3 col-2">
+                                    <label><strong>Advanced Search :</strong></label>
+                                    <button class="form-control form-control-sm btn-info btn-outline-dark border-0" data-bs-toggle="modal" data-bs-target="#modalAdvancedSearch" id=""><i class="fas fa-search fa-md"></i> Advanced Search</button>
+                                </div>
                             </div>
 
                             <div class="table-responsive">
@@ -90,8 +188,8 @@
           </div>
         </section>
 
-        <div class="modal fade" id="modalProdIdentification" tabindex="-1" role="dialog" aria-labelledby="cnptsmodal" aria-hidden="true" data-bs-backdrop="static">
-            <div class="modal-dialog modal-xl modal-xl-custom modal-dialog-centered" role="document">
+        <div class="modal fade" id="modalProdIdentification" role="dialog" aria-labelledby="cnptsmodal" aria-hidden="true" data-bs-backdrop="static">
+            <div class="modal-dialog modal-xl-custom modal-dialog-centered" role="document">
               <div class="modal-content">
                 <div class="modal-header">
                 <h3 class="modal-title" style="text-align: center"> Die set Maintenance Runcard & Product Qualification Checksheet </h3>
@@ -106,6 +204,14 @@
                   <div class="modal-body">
                     <div class="row d-none">
                     {{-- <div class="row"> --}}
+                        <div class="col-sm-3">
+                            <div class="input-group input-group-sm mb-2">
+                                <div class="input-group-prepend w-50">
+                                    <span class="input-group-text w-100" id="basic-addon1">Category</span>
+                                </div>
+                                <input type="text" name="form_category" id="txtCategory" readonly>
+                            </div>
+                        </div>
                         <div class="col-sm-3">
                             <div class="input-group input-group-sm mb-2">
                                 <div class="input-group-prepend w-50">
@@ -207,6 +313,7 @@
                                                         <option value="" disabled selected>Select Request type</option>
                                                         <option value="1">For Maintenance</option>
                                                         <option value="2">Temporary Stop</option>
+                                                        <option value="3">Comma Change</option>
                                                     </select>
                                             </div>
                                         </div>
@@ -489,17 +596,20 @@
 
                                                 <div class="table-responsive col-sm-12">
                                                     <table id="tbl_date_start_finish" class="table table-sm table-bordered table-hover display nowrap" style="width: 100%;">
-                                                        <tbody>
+                                                        <tbody
                                                             <tr class="text-center align-middle">
-                                                                <td>
-                                                                    <label class="form-check-label"> Date</label>
+                                                                <td colspan="2">
+                                                                    <label class="form-check-label"> Date & Time Start</label>
                                                                 </td>
-                                                                <td>
-                                                                    <label class="form-check-label"> Start</label>
+                                                                {{-- <td>
+                                                                    <label class="form-check-label"> Time Start</label>
+                                                                </td> --}}
+                                                                <td colspan="2">
+                                                                    <label class="form-check-label"> Date & Time Finish</label>
                                                                 </td>
-                                                                <td>
-                                                                    <label class="form-check-label"> Finish</label>
-                                                                </td>
+                                                                {{-- <td>
+                                                                    <label class="form-check-label"> Time Finish</label>
+                                                                </td> --}}
                                                             </tr>
                                                             <tr>
                                                                 <td>
@@ -510,6 +620,9 @@
                                                                     {{-- oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1');" --}}
                                                                 </td>
                                                                 <td>
+                                                                    <input type="date" class="form-control text-center align-middle dieset_condition_data" name="action_done_date_finish" id="frm_txt_action_date_finish" required>
+                                                                </td>
+                                                                <td>
                                                                     <input type="time" class="form-control text-center align-middle dieset_condition_data" name="action_done_finish_time" id="frm_txt_action_finish_time" required>
                                                                 </td>
                                                             </tr>
@@ -518,7 +631,7 @@
                                                                     <label class="form-check-label" style="margin-top: 5%" > In-charged</label>
                                                                     <input type="text" class="form-control dieset_condition_data" name="action_done_in_charged_id" id="frm_txt_action_done_in_charged_id" hidden>
                                                                 </td>
-                                                                <td colspan="2">
+                                                                <td colspan="3">
                                                                     <input type="text" class="form-control dieset_condition_data" name="action_done_in_charged" id="frm_txt_action_done_in_charged" placeholder="(Auto Generate)" readonly>
                                                                 </td>
                                                             </tr>
@@ -867,7 +980,7 @@
                                                                     <input type="text" class="form-control" id="mold_check_time" readonly>
                                                                 </td> --}}
                                                                 <td width="25%">
-                                                                    <input type="text" class="form-control text-center align-middle dieset_condition_data" name="mold_check_status" id="frm_mold_check_status">
+                                                                    <input type="text" class="form-control text-center align-middle dieset_condition_data" name="mold_check_status" id="frm_mold_check_status" value='OK FOR SET-UP'>
                                                                 </td>
                                                             </tr>
                                                         </tbody>
@@ -996,7 +1109,7 @@
                                                                 <td>
                                                                     {{-- <input type="hidden" class="form-control machine_setup_data" id="frm_txt_machine_setup_1st_in_charged_id" name="machine_setup_1st_in_charged_id">
                                                                     <input type="text" class="form-control machine_setup_data text-center" id="frm_txt_machine_setup_1st_in_charged" name="machine_setup_1st_in_charged" placeholder="(Auto Generate)" readonly> --}}
-                                                                    <select class="form-control machine_setup_data first_adjustment" id="selProductionUser" name="machine_setup_1st_in_charged" style="width: 100%;">
+                                                                    <select class="form-control select2bs5 machine_setup_data first_adjustment" id="selProductionUser" name="machine_setup_1st_in_charged" style="width: 100%;">
                                                                         <option disabled selected>-- Select Production --</option>
                                                                         {{-- <option value="">-- N/A --</option> --}}
                                                                     </select>
@@ -1004,12 +1117,13 @@
                                                                 <td>
                                                                     <input type="datetime" class="form-control text-center align-middle machine_setup_data first_adjustment" id="frm_txt_machine_setup_1st_datetime" name="machine_setup_1st_datetime" placeholder="(Auto Generate)" readonly>
                                                                 </td>
-                                                                <td>
+                                                                 <td>
                                                                     {{-- <input type="text" class="form-control machine_setup_data" id="frm_txt_machine_setup_1st_remarks" name="machine_setup_1st_remarks"> --}}
-                                                                    <select type="text" class="form-control machine_setup_data first_adjustment text-center" id="frm_txt_machine_setup_1st_remarks" name="machine_setup_1st_remarks" style="width: 100%;">
+                                                                    <select type="text" class="form-control select2bs5 machine_setup_data first_adjustment text-center" id="frm_txt_machine_setup_1st_remarks" name="machine_setup_1st_remarks" style="width: 100%;">
                                                                         <option value="" disabled selected>Please Select One</option>
                                                                         <option value="1">For Qualification</option>
                                                                         <option value="2">NG</option>
+                                                                        <option value="3">Mold Down</option>
                                                                     </select>
                                                                 </td>
                                                             </tr>
@@ -1021,7 +1135,7 @@
                                                                     <label class="form-check-label"> 2nd Adjustment</label>
                                                                 </td>
                                                                 <td>
-                                                                    <select class="form-control machine_setup_data second_adjustment" id="selTechnicianUser" name="machine_setup_2nd_in_charged" style="width: 100%;">
+                                                                    <select class="form-control select2bs5 machine_setup_data second_adjustment" id="selTechnicianUser" name="machine_setup_2nd_in_charged" style="width: 100%;">
                                                                         <option disabled selected>-- Select Technician --</option>
                                                                         {{-- <option value="">-- N/A --</option> --}}
                                                                     </select>
@@ -1043,10 +1157,11 @@
                                                                 </td>
                                                                 <td>
                                                                     {{-- <input type="text" class="form-control machine_setup_data" id="frm_txt_machine_setup_2nd_remarks" name="machine_setup_2nd_remarks"> --}}
-                                                                    <select type="text" class="form-control machine_setup_data second_adjustment text-center" id="frm_txt_machine_setup_2nd_remarks" name="machine_setup_2nd_remarks" style="width: 100%;">
+                                                                    <select type="text" class="form-control select2bs5 machine_setup_data second_adjustment text-center" id="frm_txt_machine_setup_2nd_remarks" name="machine_setup_2nd_remarks" style="width: 100%;">
                                                                         <option value="" disabled selected>Please Select One</option>
                                                                         <option value="1">For Qualification</option>
                                                                         <option value="2">NG</option>
+                                                                        <option value="3">Mold Down</option>
                                                                     </select>
                                                                 </td>
                                                             </tr>
@@ -1060,7 +1175,7 @@
                                                                 <td>
                                                                     {{-- <input type="hidden" class="form-control machine_setup_data" id="frm_txt_machine_setup_3rd_in_charged_id" name="machine_setup_3rd_in_charged_id"> --}}
                                                                     {{-- <input type="text" class="form-control machine_setup_data text-center" id="frm_txt_machine_setup_3rd_in_charged" name="machine_setup_3rd_in_charged" placeholder="(Auto Generate)" readonly> --}}
-                                                                    <select class="form-control machine_setup_data third_adjustment" id="selSupervisorEngrUser" name="machine_setup_3rd_in_charged" style="width: 100%;">
+                                                                    <select class="form-control select2bs5 machine_setup_data third_adjustment" id="selSupervisorEngrUser" name="machine_setup_3rd_in_charged" style="width: 100%;">
                                                                         <option disabled selected>-- Select Supervisor/Engr. --</option>
                                                                         {{-- <option value="">-- N/A --</option> --}}
                                                                     </select>
@@ -1070,10 +1185,11 @@
                                                                 </td>
                                                                 <td>
                                                                     {{-- <input type="text" class="form-control machine_setup_data" id="frm_txt_machine_setup_3rd_remarks" name="machine_setup_3rd_remarks"> --}}
-                                                                    <select type="text" class="form-control machine_setup_data third_adjustment text-center" id="frm_txt_machine_setup_3rd_remarks" name="machine_setup_3rd_remarks" style="width: 100%;">
+                                                                    <select type="text" class="form-control select2bs5 machine_setup_data third_adjustment text-center" id="frm_txt_machine_setup_3rd_remarks" name="machine_setup_3rd_remarks" style="width: 100%;">
                                                                         <option value="" disabled selected>Please Select One</option>
                                                                         <option value="1">For Qualification</option>
                                                                         <option value="2">NG</option>
+                                                                        <option value="3">Mold Down</option>
                                                                     </select>
                                                                 </td>
                                                             </tr>
@@ -1291,17 +1407,10 @@
                                                                                 <label class="form-check-label">1. Visual Insp.</label>
                                                                             </td>
                                                                             <td colspan="2">
-                                                                                {{-- <input type="text" class="form-control" index="2.9" name="check_point_7" id="frm_check_point_7"> --}}
                                                                                 <div class="input-group input-group-sm">
                                                                                     <select class="form-control prod_req_checking_data text-center" id="selProductionVisualUser" name="prod_visual_insp_name" style="width: 100%;">
-                                                                                        <option disabled selected>-- Production --</option>
-                                                                                        {{-- <option value="">-- N/A --</option> --}}
+                                                                                        <option disabled selected>-- Select Production --</option>
                                                                                     </select>
-                                                                                    {{-- <select class="form-control" type="text" name="request_type" id="frm_request_type">
-                                                                                        <option value="" disabled="" selected="">Select Engr.</option>
-                                                                                        <option value="1">Clark Chester Casuyon</option>
-                                                                                        <option value="2">Miguel Legaspi</option>
-                                                                                    </select> --}}
                                                                                     <input readonly type="datetime" placeholder="Auto Generate Date/Time" class="form-control prod_req_checking_data text-center" name="prod_visual_insp_datetime" id="frm_txt_prod_visual_insp_datetime" style="padding:1%" readonly>
                                                                                 </div>
                                                                             </td>
@@ -1317,17 +1426,11 @@
                                                                                 <label class="form-check-label">2. Dimension Insp.</label>
                                                                             </td>
                                                                             <td colspan="2">
-                                                                                {{-- <input type="text" class="form-control" index="2.9" name="check_point_7" id="frm_check_point_7"> --}}
                                                                                 <div class="input-group input-group-sm">
-                                                                                    <select class="form-control prod_req_checking_data text-center" id="selProductionDimentionUser" name="prod_dimension_insp_name" style="width: 100%;">
+                                                                                    <select class="form-control prod_req_checking_data text-center" id="selProductionDimentionUser" name="prod_dimension_insp_name" style="width: 100%;" required>
                                                                                         <option disabled selected>-- Production --</option>
                                                                                         {{-- <option value="">-- N/A --</option> --}}
                                                                                     </select>
-                                                                                    {{-- <select class="form-control" type="text" name="request_type" id="frm_request_type">
-                                                                                        <option value="" disabled="" selected="">Select Engr.</option>
-                                                                                        <option value="1">Clark Chester Casuyon</option>
-                                                                                        <option value="2">Miguel Legaspi</option>
-                                                                                    </select> --}}
                                                                                     <input readonly type="datetime" placeholder="Auto Generate Date/Time" class="form-control prod_req_checking_data text-center" name="prod_dimension_insp_datetime" id="frm_txt_prod_dimension_insp_datetime" style="padding:1%" readonly>
                                                                                 </div>
                                                                             </td>
@@ -1408,13 +1511,13 @@
                                                                             <td>
                                                                                 <div class="input-group input-group-sm">
                                                                                     <span class="input-group-text">Drawing #: </span>
-                                                                                    <input type="text" class="form-control prod_req_checking_data" name="engr_tech_material_drawing_no" id="frm_txt_engr_tech_material_drawing_no">
+                                                                                    <input type="text" class="form-control prod_req_checking_data" name="engr_tech_material_drawing_no" id="frm_txt_engr_tech_material_drawing_no" readonly>
                                                                                 </div>
                                                                             </td>
                                                                             <td colspan="2">
                                                                                 <div class="input-group input-group-sm">
                                                                                     <span class="input-group-text" style="padding:3%">Rev #: </span>
-                                                                                    <input type="text" class="form-control prod_req_checking_data" name="engr_tech_material_rev_no" id="frm_txt_engr_tech_material_rev_no">
+                                                                                    <input type="text" class="form-control prod_req_checking_data" name="engr_tech_material_rev_no" id="frm_txt_engr_tech_material_rev_no" readonly>
                                                                                 </div>
                                                                             </td>
                                                                         </tr>
@@ -1429,13 +1532,13 @@
                                                                             <td>
                                                                                 <div class="input-group input-group-sm">
                                                                                     <span class="input-group-text">Drawing #: </span>
-                                                                                    <input type="text" class="form-control prod_req_checking_data" name="engr_tech_insp_guide_drawing_no" id="frm_txt_engr_tech_insp_guide_drawing_no">
+                                                                                    <input type="text" class="form-control prod_req_checking_data" name="engr_tech_insp_guide_drawing_no" id="frm_txt_engr_tech_insp_guide_drawing_no" readonly>
                                                                                 </div>
                                                                             </td>
                                                                             <td colspan="2">
                                                                                 <div class="input-group input-group-sm">
                                                                                     <span class="input-group-text" style="padding:3%">Rev #: </span>
-                                                                                    <input type="text" class="form-control prod_req_checking_data" name="engr_tech_insp_guide_rev_no" id="frm_txt_engr_tech_insp_guide_rev_no">
+                                                                                    <input type="text" class="form-control prod_req_checking_data" name="engr_tech_insp_guide_rev_no" id="frm_txt_engr_tech_insp_guide_rev_no" readonly>
                                                                                 </div>
                                                                             </td>
                                                                         </tr>
@@ -1497,7 +1600,7 @@
                                                                             <td colspan="2">
                                                                                 {{-- <input type="text" class="form-control dieset_condition_data" name="check_point_7" id="frm_check_point_7"> --}}
                                                                                 <div class="input-group input-group-sm">
-                                                                                    <select class="form-control prod_req_checking_data text-center" id="selTechnicianVisualUser" name="engr_tech_visual_insp_name" style="width: 100%;">
+                                                                                    <select class="form-control prod_req_checking_data text-center" id="selTechnicianVisualUser" name="engr_tech_visual_insp_name" style="width: 100%;" required>
                                                                                         <option disabled selected>-- Technician --</option>
                                                                                         {{-- <option value="">-- N/A --</option> --}}
                                                                                     </select>
@@ -1695,7 +1798,7 @@
                                                                             <td colspan="2">
                                                                                 {{-- <input type="text" class="form-control dieset_condition_data" index="2.9" name="check_point_7" id="frm_check_point_7"> --}}
                                                                                 <div class="input-group input-group-sm">
-                                                                                    <select class="form-control prod_req_checking_data text-center" id="selQcVisualUser" name="lqc_visual_insp_name" style="width: 100%;">
+                                                                                    <select class="form-control prod_req_checking_data text-center" id="selQcVisualUser" name="lqc_visual_insp_name" style="width: 100%;" required>
                                                                                         <option disabled selected>-- QC Inspector --</option>
                                                                                         {{-- <option value="">-- N/A --</option> --}}
                                                                                     </select>
@@ -1893,7 +1996,7 @@
                                                                             {{-- OGAB --}}
                                                                             <td colspan="2">
                                                                                 <div class="input-group input-group-sm">
-                                                                                    <select class="form-control prod_req_checking_data text-center" id="selEngrVisualUser" name="process_engr_visual_insp_name" style="width: 100%;">
+                                                                                    <select class="form-control select2bs5 prod_req_checking_data text-center" id="selEngrVisualUser" name="process_engr_visual_insp_name" style="width: 100%;">
                                                                                         <option disabled selected>-- Process Engr --</option>
                                                                                         {{-- <option value="">-- N/A --</option> --}}
                                                                                     </select>
@@ -1916,7 +2019,7 @@
                                                                             <td colspan="2" class="text-center">
                                                                                 {{-- <input type="text" class="form-control prod_req_checking_data" name="check_point_7" id="frm_check_point_7"> --}}
                                                                                 <div class="input-group input-group-sm">
-                                                                                    <select class="form-control prod_req_checking_data text-center" id="selEngrDimensionUser" name="process_engr_dimension_insp_name" style="width: 100%;">
+                                                                                    <select class="form-control select2bs5 prod_req_checking_data text-center" id="selEngrDimensionUser" name="process_engr_dimension_insp_name" style="width: 100%;">
                                                                                         <option disabled selected>-- Process Engr --</option>
                                                                                         {{-- <option value="">-- N/A --</option> --}}
                                                                                     </select>
@@ -1949,7 +2052,7 @@
                                             </div>
                                             <br>
                                             {{-- MACHINE SET-UP SAMPLES --}}
-                                            <div class="col-sm-4" style="padding:0; margin-left:30%">
+                                            <div class="col-sm-5" style="padding:0; margin-left:30%">
                                                 <div class="row col-sm-12 d-flex justify-content-center" style="padding-left:15px; padding-right:0">
                                                     <div class="col-sm-12 text-center" style="padding:0">
                                                         <div class="table-responsive col-sm-12" style="padding:0">
@@ -2106,11 +2209,11 @@
                                                                 </td>
                                                                 <td>
                                                                     <div class="form-check form-check-inline">
-                                                                        <input class="form-check-input machine_param_checking_data" type="radio" value="1" name="machine_param_chckng_ref" id="frm_machine_param_chckng_ref_1">
+                                                                        <input class="form-check-input machine_param_checking_data engr_input" type="radio" value="1" name="machine_param_chckng_ref" id="frm_machine_param_chckng_ref_1">
                                                                         <label class="form-check-label"> Standard Machine Data</label>
                                                                     </div>
                                                                     <div class="form-check form-check-inline">
-                                                                        <input class="form-check-input machine_param_checking_data" type="radio" value="2" name="machine_param_chckng_ref" id="frm_machine_param_chckng_ref_2">
+                                                                        <input class="form-check-input machine_param_checking_data engr_input" type="radio" value="2" name="machine_param_chckng_ref" id="frm_machine_param_chckng_ref_2">
                                                                         <label class="form-check-label"> Approved Evaluation Data</label>
                                                                     </div>
                                                                 </td>
@@ -2151,40 +2254,36 @@
                                                                     <label class="form-check-label"> Pressure</label>
                                                                 </td>
                                                                 <td class="align-middle">
-                                                                    <input type="text" class="form-control machine_param_checking_data" name="pressure_std_specs" id="frm_txt_pressure_std_specs">
+                                                                    <input type="text" class="form-control machine_param_checking_data engr_input" name="pressure_std_specs" id="frm_txt_pressure_std_specs">
                                                                 </td>
                                                                 <td class="align-middle">
-                                                                    <input type="text" class="form-control machine_param_checking_data" name="pressure_engr_actual" id="frm_txt_pressure_engr_actual">
+                                                                    <input type="text" class="form-control machine_param_checking_data engr_input" name="pressure_engr_actual" id="frm_txt_pressure_engr_actual">
                                                                 </td>
                                                                 <td width="30">
-                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data" index="6.0" type="radio" id="pressure_engr_result_1" name="pressure_engr_result" value="0">
+                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data engr_input" index="6.0" type="radio" id="pressure_engr_result_1" name="pressure_engr_result" value="0">
                                                                 </td>
                                                                 <td width="30">
-                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data" index="6.0" type="radio" id="pressure_engr_result_2" name="pressure_engr_result" value="1">
+                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data engr_input" index="6.0" type="radio" id="pressure_engr_result_2" name="pressure_engr_result" value="1">
                                                                 </td>
                                                                 <td>
                                                                     <div class="input-group">
-                                                                        <select class="form-control text-center machine_param_checking_data" id="selPressureEngrUser" name="pressure_engr_name">
-                                                                            <option disabled selected>-- Process Engr --</option>
-                                                                        </select>
-                                                                        <input type="date" placeholder="Date" class="form-control text-center machine_param_checking_data" name="pressure_engr_date" id="frm_txt_pressure_engr_date" style="padding:1%">
+                                                                        <select class="form-control select2bs5 text-center machine_param_checking_data engr_input" id="selPressureEngrUser" name="pressure_engr_name"></select>
+                                                                        <input type="date" placeholder="Date" class="form-control form-control-sm text-center machine_param_checking_data engr_input" name="pressure_engr_date" id="frm_txt_pressure_engr_date" style="padding:1%">
                                                                     </div>
                                                                 </td>
                                                                 <td class="align-middle">
-                                                                    <input type="text" class="form-control machine_param_checking_data" name="pressure_qc_actual" id="frm_txt_pressure_qc_actual">
+                                                                    <input type="text" class="form-control machine_param_checking_data qc_input" name="pressure_qc_actual" id="frm_txt_pressure_qc_actual">
                                                                 </td>
                                                                 <td width="30">
-                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data" index="6.1" type="radio" id="pressure_qc_result_1" name="pressure_qc_result" value="0">
+                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data qc_input" index="6.1" type="radio" id="pressure_qc_result_1" name="pressure_qc_result" value="0">
                                                                 </td>
                                                                 <td width="30">
-                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data" index="6.1" type="radio" id="pressure_qc_result_2" name="pressure_qc_result" value="1">
+                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data qc_input" index="6.1" type="radio" id="pressure_qc_result_2" name="pressure_qc_result" value="1">
                                                                 </td>
                                                                 <td>
                                                                     <div class="input-group">
-                                                                        <select class="form-control text-center machine_param_checking_data" id="selPressureQCUser" name="pressure_qc_name">
-                                                                            <option disabled selected>-- QC --</option>
-                                                                        </select>
-                                                                        <input type="date" placeholder="Date" class="form-control text-center machine_param_checking_data" name="pressure_qc_date" id="frm_txt_pressure_qc_date" style="padding:1%">
+                                                                        <select class="form-control select2bs5 text-center machine_param_checking_data qc_input" id="selPressureQCUser" name="pressure_qc_name"></select>
+                                                                        <input type="date" placeholder="Date" class="form-control form-control-sm text-center machine_param_checking_data qc_input" name="pressure_qc_date" id="frm_txt_pressure_qc_date" style="padding:1%">
                                                                     </div>
                                                                 </td>
                                                             </tr>
@@ -2194,40 +2293,36 @@
                                                                     <label class="form-check-label"> Temp. Nozzle</label>
                                                                 </td>
                                                                 <td class="align-middle">
-                                                                    <input type="text" class="form-control machine_param_checking_data" name="temp_nozzle_std_specs" id="frm_txt_temp_nozzle_std_specs">
+                                                                    <input type="text" class="form-control machine_param_checking_data engr_input" name="temp_nozzle_std_specs" id="frm_txt_temp_nozzle_std_specs">
                                                                 </td>
                                                                 <td class="align-middle">
-                                                                    <input type="text" class="form-control machine_param_checking_data" name="temp_nozzle_engr_actual" id="frm_txt_temp_nozzle_engr_actual">
+                                                                    <input type="text" class="form-control machine_param_checking_data engr_input" name="temp_nozzle_engr_actual" id="frm_txt_temp_nozzle_engr_actual">
                                                                 </td>
                                                                 <td width="30">
-                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data" index="6.2" type="radio" id="temp_nozzle_engr_result_1" name="temp_nozzle_engr_result" value="0">
+                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data engr_input" index="6.2" type="radio" id="temp_nozzle_engr_result_1" name="temp_nozzle_engr_result" value="0">
                                                                 </td>
                                                                 <td width="30">
-                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data" index="6.2" type="radio" id="temp_nozzle_engr_result_2" name="temp_nozzle_engr_result" value="1">
+                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data engr_input" index="6.2" type="radio" id="temp_nozzle_engr_result_2" name="temp_nozzle_engr_result" value="1">
                                                                 </td>
                                                                 <td>
                                                                     <div class="input-group">
-                                                                        <select class="form-control text-center machine_param_checking_data" id="selTempNozzleEngrUser" name="temp_nozzle_engr_name">
-                                                                            <option disabled selected>-- Process Engr --</option>
-                                                                        </select>
-                                                                        <input type="date" placeholder="Date" class="form-control text-center machine_param_checking_data" name="temp_nozzle_engr_date" id="frm_txt_temp_nozzle_engr_date" style="padding:1%">
+                                                                        <select class="form-control select2bs5 text-center machine_param_checking_data engr_input" id="selTempNozzleEngrUser" name="temp_nozzle_engr_name"></select>
+                                                                        <input type="date" placeholder="Date" class="form-control form-control-sm text-center machine_param_checking_data engr_input" name="temp_nozzle_engr_date" id="frm_txt_temp_nozzle_engr_date" style="padding:1%">
                                                                     </div>
                                                                 </td>
                                                                 <td class="align-middle">
-                                                                    <input type="text" class="form-control machine_param_checking_data" name="temp_nozzle_qc_actual" id="frm_txt_temp_nozzle_qc_actual">
+                                                                    <input type="text" class="form-control machine_param_checking_data qc_input" name="temp_nozzle_qc_actual" id="frm_txt_temp_nozzle_qc_actual">
                                                                 </td>
                                                                 <td width="30">
-                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data" index="6.3" type="radio" id="temp_nozzle_qc_result_1" name="temp_nozzle_qc_result" value="0">
+                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data qc_input" index="6.3" type="radio" id="temp_nozzle_qc_result_1" name="temp_nozzle_qc_result" value="0">
                                                                 </td>
                                                                 <td width="30">
-                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data" index="6.3" type="radio" id="temp_nozzle_qc_result_2" name="temp_nozzle_qc_result" value="1">
+                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data qc_input" index="6.3" type="radio" id="temp_nozzle_qc_result_2" name="temp_nozzle_qc_result" value="1">
                                                                 </td>
                                                                 <td>
                                                                     <div class="input-group">
-                                                                        <select class="form-control text-center machine_param_checking_data" id="selTempNozzleQCUser" name="temp_nozzle_qc_name">
-                                                                            <option disabled selected>-- QC --</option>
-                                                                        </select>
-                                                                        <input type="date" placeholder="Date" class="form-control text-center machine_param_checking_data" name="temp_nozzle_qc_date" id="frm_txt_temp_nozzle_qc_date" style="padding:1%">
+                                                                        <select class="form-control select2bs5 text-center machine_param_checking_data qc_input" id="selTempNozzleQCUser" name="temp_nozzle_qc_name"></select>
+                                                                        <input type="date" placeholder="Date" class="form-control form-control-sm text-center machine_param_checking_data qc_input" name="temp_nozzle_qc_date" id="frm_txt_temp_nozzle_qc_date" style="padding:1%">
                                                                     </div>
                                                                 </td>
                                                             </tr>
@@ -2236,40 +2331,36 @@
                                                                     <label class="form-check-label"> Temp. Mold</label>
                                                                 </td>
                                                                 <td class="align-middle">
-                                                                    <input type="text" class="form-control machine_param_checking_data" name="temp_mold_std_specs" id="frm_txt_temp_mold_std_specs">
+                                                                    <input type="text" class="form-control machine_param_checking_data engr_input" name="temp_mold_std_specs" id="frm_txt_temp_mold_std_specs">
                                                                 </td>
                                                                 <td class="align-middle">
-                                                                    <input type="text" class="form-control machine_param_checking_data" name="temp_mold_engr_actual" id="frm_txt_temp_mold_engr_actual">
+                                                                    <input type="text" class="form-control machine_param_checking_data engr_input" name="temp_mold_engr_actual" id="frm_txt_temp_mold_engr_actual">
                                                                 </td>
                                                                 <td width="30">
-                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data" index="6.4" type="radio" id="temp_mold_engr_result_1" name="temp_mold_engr_result" value="0">
+                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data engr_input" index="6.4" type="radio" id="temp_mold_engr_result_1" name="temp_mold_engr_result" value="0">
                                                                 </td>
                                                                 <td width="30">
-                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data" index="6.4" type="radio" id="temp_mold_engr_result_2" name="temp_mold_engr_result" value="1">
+                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data engr_input" index="6.4" type="radio" id="temp_mold_engr_result_2" name="temp_mold_engr_result" value="1">
                                                                 </td>
                                                                 <td>
                                                                     <div class="input-group">
-                                                                        <select class="form-control text-center machine_param_checking_data" id="selTempMoldEngrUser" name="temp_mold_engr_name">
-                                                                            <option disabled selected>-- Process Engr --</option>
-                                                                        </select>
-                                                                        <input type="date" placeholder="Date" class="form-control text-center machine_param_checking_data" name="temp_mold_engr_date" id="frm_txt_temp_mold_engr_date" style="padding:1%">
+                                                                        <select class="form-control select2bs5 text-center machine_param_checking_data engr_input" id="selTempMoldEngrUser" name="temp_mold_engr_name"></select>
+                                                                        <input type="date" placeholder="Date" class="form-control form-control-sm text-center machine_param_checking_data engr_input" name="temp_mold_engr_date" id="frm_txt_temp_mold_engr_date" style="padding:1%">
                                                                     </div>
                                                                 </td>
                                                                 <td class="align-middle">
-                                                                    <input type="text" class="form-control machine_param_checking_data" name="temp_mold_qc_actual" id="frm_txt_temp_mold_qc_actual">
+                                                                    <input type="text" class="form-control machine_param_checking_data qc_input" name="temp_mold_qc_actual" id="frm_txt_temp_mold_qc_actual">
                                                                 </td>
                                                                 <td width="30">
-                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data" index="6.5" type="radio" id="temp_mold_qc_result_1" name="temp_mold_qc_result" value="0">
+                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data qc_input" index="6.5" type="radio" id="temp_mold_qc_result_1" name="temp_mold_qc_result" value="0">
                                                                 </td>
                                                                 <td width="30">
-                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data" index="6.5" type="radio" id="temp_mold_qc_result_2" name="temp_mold_qc_result" value="1">
+                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data qc_input" index="6.5" type="radio" id="temp_mold_qc_result_2" name="temp_mold_qc_result" value="1">
                                                                 </td>
                                                                 <td>
                                                                     <div class="input-group">
-                                                                        <select class="form-control text-center machine_param_checking_data" id="selTempMoldQCUser" name="temp_mold_qc_name">
-                                                                            <option disabled selected>-- QC --</option>
-                                                                        </select>
-                                                                        <input type="date" placeholder="Date" class="form-control text-center machine_param_checking_data" name="temp_mold_qc_date" id="frm_txt_temp_mold_qc_date" style="padding:1%">
+                                                                        <select class="form-control select2bs5 text-center machine_param_checking_data qc_input" id="selTempMoldQCUser" name="temp_mold_qc_name"></select>
+                                                                        <input type="date" placeholder="Date" class="form-control form-control-sm text-center machine_param_checking_data qc_input" name="temp_mold_qc_date" id="frm_txt_temp_mold_qc_date" style="padding:1%">
                                                                     </div>
                                                                 </td>
                                                             </tr>
@@ -2278,40 +2369,36 @@
                                                                     <label class="form-check-label"> Cooling Time</label>
                                                                 </td>
                                                                 <td class="align-middle">
-                                                                    <input type="text" class="form-control machine_param_checking_data" name="ctime_std_specs" id="frm_txt_ctime_std_specs">
+                                                                    <input type="text" class="form-control machine_param_checking_data engr_input" name="ctime_std_specs" id="frm_txt_ctime_std_specs">
                                                                 </td>
                                                                 <td class="align-middle">
-                                                                    <input type="text" class="form-control machine_param_checking_data" name="ctime_engr_actual" id="frm_txt_ctime_engr_actual">
+                                                                    <input type="text" class="form-control machine_param_checking_data engr_input" name="ctime_engr_actual" id="frm_txt_ctime_engr_actual">
                                                                 </td>
                                                                 <td width="30">
-                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data" index="6.6" type="radio" id="ctime_engr_result_1" name="ctime_engr_result" value="0">
+                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data engr_input" index="6.6" type="radio" id="ctime_engr_result_1" name="ctime_engr_result" value="0">
                                                                 </td>
                                                                 <td width="30">
-                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data" index="6.6" type="radio" id="ctime_engr_result_2" name="ctime_engr_result" value="1">
+                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data engr_input" index="6.6" type="radio" id="ctime_engr_result_2" name="ctime_engr_result" value="1">
                                                                 </td>
                                                                 <td>
                                                                     <div class="input-group">
-                                                                        <select class="form-control text-center machine_param_checking_data" id="selCtimeEngrUser" name="ctime_engr_name">
-                                                                            <option disabled selected>-- Process Engr --</option>
-                                                                        </select>
-                                                                        <input type="date" placeholder="Date" class="form-control text-center machine_param_checking_data" name="ctime_engr_date" id="frm_txt_ctime_engr_date" style="padding:1%">
+                                                                        <select class="form-control select2bs5 text-center machine_param_checking_data engr_input" id="selCtimeEngrUser" name="ctime_engr_name"></select>
+                                                                        <input type="date" placeholder="Date" class="form-control form-control-sm text-center machine_param_checking_data engr_input" name="ctime_engr_date" id="frm_txt_ctime_engr_date" style="padding:1%">
                                                                     </div>
                                                                 </td>
                                                                 <td class="align-middle">
-                                                                    <input type="text" class="form-control machine_param_checking_data" name="ctime_qc_actual" id="frm_txt_ctime_qc_actual">
+                                                                    <input type="text" class="form-control machine_param_checking_data qc_input" name="ctime_qc_actual" id="frm_txt_ctime_qc_actual">
                                                                 </td>
                                                                 <td width="30">
-                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data" index="6.7" type="radio" id="ctime_qc_result_1" name="ctime_qc_result" value="0">
+                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data qc_input" index="6.7" type="radio" id="ctime_qc_result_1" name="ctime_qc_result" value="0">
                                                                 </td>
                                                                 <td width="30">
-                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data" index="6.7" type="radio" id="ctime_qc_result_2" name="ctime_qc_result" value="1">
+                                                                    <input style="margin-left:0px; width:25px; height:25px;" class="form-check-input machine_param_checking_data qc_input" index="6.7" type="radio" id="ctime_qc_result_2" name="ctime_qc_result" value="1">
                                                                 </td>
                                                                 <td>
                                                                     <div class="input-group">
-                                                                        <select class="form-control text-center machine_param_checking_data" id="selCtimeQCUser" name="ctime_qc_name">
-                                                                            <option disabled selected>-- QC --</option>
-                                                                        </select>
-                                                                        <input type="date" placeholder="Date" class="form-control text-center machine_param_checking_data" name="ctime_qc_date" id="frm_txt_ctime_qc_date" style="padding:1%">
+                                                                        <select class="form-control select2bs5 text-center machine_param_checking_data qc_input" id="selCtimeQCUser" name="ctime_qc_name"></select>
+                                                                        <input type="date" placeholder="Date" class="form-control form-control-sm text-center machine_param_checking_data qc_input" name="ctime_qc_date" id="frm_txt_ctime_qc_date" style="padding:1%">
                                                                     </div>
                                                                 </td>
                                                             </tr>
@@ -2400,7 +2487,7 @@
                                                                             <td colspan="2">
                                                                                 <div class="input-group input-group-sm">
                                                                                     <span class="input-group-text" style="50%">Judged By:</span>
-                                                                                    <select class="form-control specification_data" id="selNgJudgedBy" name="ng_judged_by"></select>
+                                                                                    <select class="form-control select2bs5 specification_data" id="selNgJudgedBy" name="ng_judged_by"></select>
 
                                                                                     {{-- <input hidden class="form-control specification_data" name="ng_judged_by_id" id="frm_txt_ng_judged_by_id">
                                                                                     <input type="text" class="form-control specification_data" name="ng_judged_by" id="frm_txt_ng_judged_by"> --}}
@@ -2449,7 +2536,7 @@
                                                                             <td colspan="2">
                                                                                 <div class="input-group input-group-sm" style="width:50%">
                                                                                     <span class="input-group-text" style="width:30%">Verified By:</span>
-                                                                                    <select class="form-control specification_data" id="selOkVerifiedBy" name="ok_verified_by"></select>
+                                                                                    <select class="form-control select2bs5 specification_data" id="selOkVerifiedBy" name="ok_verified_by"></select>
                                                                                     {{-- <input hidden class="form-control specification_data" name="ok_verified_by_id" id="frm_txt_ok_verified_by_id">
                                                                                     <input type="text" class="form-control specification_data" name="ok_verified_by" id="frm_txt_ok_verified_by"> --}}
                                                                                     {{-- <span class="input-group-text" style="50%">(Name/Sign)</span> --}}
@@ -2548,7 +2635,7 @@
                                                                             <td colspan="2">
                                                                                 <div class="input-group input-group-sm">
                                                                                     <span class="input-group-text" style="width:40%">Signed By:</span>
-                                                                                    <select class="form-control specification_data" id="selSignedBy" name="signed_by"></select>
+                                                                                    <select class="form-control select2bs5 specification_data" id="selSignedBy" name="signed_by"></select>
                                                                                     {{-- <input hidden class="form-control specification_data" name="signed_id" id="frm_txt_signed_id">
                                                                                     <input type="text" class="form-control specification_data" name="signed" id="frm_txt_signed"> --}}
                                                                                 </div>
@@ -2638,7 +2725,7 @@
                                                                                     {{-- <span class="input-group-text" style="50%">Prepared By:</span> --}}
                                                                                     {{-- <input type="text" class="form-control form-control-sm completion_activity" name="prepared_by" id="SelPreparedBy"> --}}
                                                                                 {{-- </div> --}}
-                                                                                    <select class="form-control form-control-sm completion_activity" id="SelPreparedBy" name="prepared_by"></select>
+                                                                                    <select class="form-control select2bs5 form-control-sm completion_activity" id="SelPreparedBy" name="prepared_by"></select>
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
@@ -2749,7 +2836,7 @@
                                                                                     {{-- <span class="input-group-text" >Checked By:</span> --}}
                                                                                     {{-- <input type="text" class="form-control form-control-sm completion_activity" name="checked_by" id="SelCheckedBy"> --}}
                                                                                 {{-- </div> --}}
-                                                                                <select class="form-control form-control-sm completion_activity" id="SelCheckedBy" name="checked_by"></select>
+                                                                                <select class="form-control select2bs5 form-control-sm completion_activity" id="SelCheckedBy" name="checked_by"></select>
                                                                             </td>
 
                                                                             {{-- <td colspan="2">
@@ -2906,7 +2993,7 @@
                                 <div class="col-sm-12">
                                     <div class="form-group">
                                         <label>Select Control # for Export</label>
-                                        <select class="form-control selectControlNumber" name="ctrl_no" id="txtCtrlNo" style="width: 100%;"></select>
+                                        <select class="form-control select2bs5 selectControlNumber" name="ctrl_no" id="txtCtrlNo" style="width: 100%;"></select>
                                     </div>
                                 </div>
                             </div>
@@ -3111,8 +3198,8 @@
                                         <div class="col-sm-6">
                                             <br>
                                             <label class="form-check-label"> Fabricated by:</label>
-                                            <select class="form-control dieset_condition_data" id="selFabricatedBy" name="fabricated_by" style="width: 100%;">
-                                                <option disabled selected>-- Select Engr. --</option>
+                                            <select class="form-control select2bs5 dieset_condition_data" id="selFabricatedBy" name="fabricated_by" style="width: 100%;">
+                                                {{-- <option disabled selected>-- Select Engr. --</option> --}}
                                             </select>
                                             {{-- <input type="text" class="form-control text-center align-middle dieset_condition_data" name="fabricated_by_id" id="frm_txt_fabricated_by_id" hidden>
                                             <input type="text" class="form-control text-center align-middle dieset_condition_data" name="fabricated_by" id="frm_txt_fabricated_by" readonly> --}}
@@ -3121,8 +3208,8 @@
                                         <div class="col-sm-6">
                                             <br>
                                             <label class="form-check-label"> Measurement validated by:</label>
-                                            <select class="form-control dieset_condition_data" id="selValidatedBy" name="m_validated_by" style="width: 100%;">
-                                                <option disabled selected>-- Select Engr. --</option>
+                                            <select class="form-control select2bs5 dieset_condition_data" id="selValidatedBy" name="m_validated_by" style="width: 100%;">
+                                                {{-- <option disabled selected>-- Select Engr. --</option> --}}
                                             </select>
                                             {{-- <input type="text" class="form-control text-center align-middle dieset_condition_data" name="m_validated_by_id" id="frm_m_validated_by_id" hidden>
                                             <input type="text" class="form-control text-center align-middle dieset_condition_data" name="m_validated_by" id="frm_m_validated_by" readonly> --}}
@@ -3192,11 +3279,73 @@
         </style>
 
         <script type="text/javascript">
-            $(document).ready(function() {
+            $(document).ready(function(){
 
-                $('.select2bs4').select2({
-                        theme: 'bootstrap4'
-                    });
+                // $.fn.modal.Constructor.prototype.enforceFocus = function() {};
+
+                $('.select2bs5').select2({
+                    theme: 'bootstrap-5',
+                    // dropdownParent: $('body'),
+                    // width: '100%'
+                    // dropdownAutoWidth: true,
+                    // dropdownParent: $('#modalProdIdentification')
+                });
+
+                // Apply Select2 to all select elements inside any modal dynamically
+                // $('.modal').on('shown.bs.modal', function () {
+                //     $(this).find('.select2bs5').each(function() {
+                //         $(this).select2({
+                //             theme: 'bootstrap-5',
+                //             dropdownParent: $(this).closest('.modal') // Ensures correct parent modal
+                //         });
+                //     });
+                // });
+
+                // PART 2 USER SELECTION
+                GetSupervisorEngrUser('1,9,15,16,17', $("#selFabricatedBy")); //Internally Fabricated Parts(X) Fabricated By
+                GetSupervisorEngrUser('1,9,15,16,17', $("#selValidatedBy")); //Internally Fabricated Parts(X) Validated By
+
+                // PART 4 USER SELECTION
+                GetProductionUsers('1,4,12,13,14', $("#selProductionUser")); //Machine Set-up 1st Adjustment (In-Charge)
+                GetTechnicianUser('9,11,15', $("#selTechnicianUser")); //Machine Set-up 2md Adjustment (In-Charge)
+                GetSupervisorEngrUser('1,9,15,16,17', $("#selSupervisorEngrUser")); //Machine Set-up 3rd Adjustment (In-Charge)
+
+                // PART 5 USER SELECTION
+                GetProductionUsers('1,4,12,13,14', $("#selProductionVisualUser")); // Production Visual Inspection
+                // GetProductionUsers('1,4,12,13,14', $("#selProductionDimentionUser")); // Production Dimension Inspection //old
+                GetTechnicianUser('9,11,15', $("#selProductionDimentionUser")); // // Production Dimension Inspection //new
+                GetTechnicianUser('9,11,15', $("#selTechnicianVisualUser")); // Technician Visual Inspection
+                GetTechnicianUser('9,11,15', $("#selTechnicianDimensionUser")); // Technician Dimension Inspection
+                GetQcInspectorUser('2,5', $("#selQcVisualUser")); // QC Visual Inspection
+                GetQcInspectorUser('2,5', $("#selQcDimensionUser")); // QC Dimension Inspection
+                GetSupervisorEngrUser('1,9,15,16,17', $("#selEngrVisualUser")); // Process Engr Visual Inspection
+                GetSupervisorEngrUser('1,9,15,16,17', $("#selEngrDimensionUser")); // Process Engr Dimension Inspection
+
+                GetProductionUsers('1,4,12,13,14', $("#selMachineSetupSamplesPIC")); //For Machine Setup Sample (PIC)
+                GetQcInspectorUser('2,5', $("#selMachineSetupSamplesQc")); //For Machine Setup Sample (QC)
+                GetSupervisorEngrUser('1,9,15,16,17', $("#selMachineSetupSamplesEngr")); //For Machine Setup Sample (ENGR)
+
+                GetSupervisorEngrUser('1,9,15,16,17', $("#selPressureEngrUser"));
+                GetQcInspectorUser('2,5', $("#selPressureQCUser"));
+                GetSupervisorEngrUser('1,9,15,16,17', $("#selTempNozzleEngrUser"));
+                GetQcInspectorUser('2,5', $("#selTempNozzleQCUser"));
+                GetSupervisorEngrUser('1,9,15,16,17', $("#selTempMoldEngrUser"));
+                GetQcInspectorUser('2,5', $("#selTempMoldQCUser"));
+                GetSupervisorEngrUser('1,9,15,16,17', $("#selCtimeEngrUser"));
+                GetQcInspectorUser('2,5', $("#selCtimeQCUser"));
+
+                // SAMPLE SELECTION ONLY *FOR REVISION
+                GetProductionUsers('1,4,12,13,14', $("#selNgJudgedBy")); //For Specification (NG Judged By)
+                GetQcInspectorUser('2,5', $("#selOkVerifiedBy")); //For Specification (OK Verified By)
+                GetSupervisorEngrUser('1,9,15,16,17', $("#selSignedBy")); //For Specification (Signed By)
+
+                // PART 8 USER SELECTION
+                GetProductionUsers('1,4,12,13,14', $("#SelPreparedBy")); //For Specification (Prepared By)
+                GetProductionUsers('1,4,12,13,14', $("#SelCheckedBy")); //For Specification (Checked By)
+
+                // $('.select2bs4').select2({
+                //         theme: 'bootstrap4'
+                //     });
 
                 $("#tbl_dmrpqc").on('click', '.actionExportBtn', function(e){
                     let id = $(this).attr('dmrpqc_id');
@@ -3247,6 +3396,7 @@
                             param.request_date_from = $("input[name='request_date_from']", $("#frmSearch")).val();
                             param.request_date_to = $("input[name='request_date_to']", $("#frmSearch")).val();
                             param.status = $("select[name='status']", $("#frmSearch")).val();
+                            param.category = $("select[name='factory']").val();
                         }
                     },
                     "columns": [
@@ -3269,6 +3419,9 @@
                             else if(data == 2) {
                                 return 'Temporary Stop'
                             }
+                            else if(data == 3) {
+                                return 'Comma Change'
+                            }
                         }
                     },
                     // { "data": "created_by" },
@@ -3290,6 +3443,7 @@
                     // frmProdIdentification.find('button').attr('disabled',false);
                     frmProdIdentification.find('textarea').attr('readonly',false);
                     GetUserIDBySession();
+                    frmProdIdentification.find('#txtCategory').val($('select[name="factory"]').val());
                     $('#modalProdIdentification').modal('show');
                 });
 

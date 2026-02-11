@@ -36,6 +36,7 @@ class CreateDmrpqcDiesetConditionsTable extends Migration
             $table->string('quantity')->nullable();
             $table->string('action_done_date_start')->nullable();
             $table->string('action_done_start_time')->nullable();
+            $table->string('action_done_date_finish')->nullable(); //new column
             $table->string('action_done_finish_time')->nullable();
             $table->unsignedBigInteger('in_charged')->nullable();
             $table->string('check_point_1_marking_check')->nullable();

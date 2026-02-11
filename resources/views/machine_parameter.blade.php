@@ -54,13 +54,13 @@
             <div class="container-fluid">
                 <div class="row mb-2">
                     <div class="col-sm-6">
-                        <h1>Machine Parameter</h1>
+                        <h1>Injection Machine Parameter</h1>
                     </div>
                     <div class="col-sm-6">
                         <ol class="breadcrumb float-sm-right">
                             <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a>
                             </li>
-                            <li class="breadcrumb-item active">Machine Parameter</li>
+                            <li class="breadcrumb-item active">Injection Machine Parameter</li>
                         </ol>
                     </div>
                 </div>
@@ -76,74 +76,31 @@
                         <!-- general form elements -->
                         <div class="card card-dark">
                             <div class="card-header">
-                                <h3 class="card-title">Machine Parameter</h3>
+                                <h3 class="card-title">Injection Machine Parameter Table (Common Data Checksheet)</h3>
                             </div>
                             <!-- Start Page Content -->
                             <div class="card-body">
-                                <ul class="nav nav-tabs" id="myTab" role="tablist">
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link active" data-bs-toggle="tab"
-                                            data-bs-target="#MachineParameter" type="button" role="tab">Form
-                                            1</button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" data-bs-toggle="tab"
-                                            data-bs-target="#machineParameterForm2" type="button" role="tab">Form
-                                            2</button>
-                                    </li>
-                                </ul>
-                                <div class="tab-content" id="myTabContent">
-                                    <div class="tab-pane fade show active" id="MachineParameter" role="tabpanel">
-                                        <div class="text-right mt-4">
-                                            <button type="button" class="btn btn-primary mb-3" id="btnAddMachine1"
-                                                data-bs-toggle="modal" data-bs-target="#modalAddMachine1"><i
-                                                    class="fa fa-plus fa-md"></i> Add Machine Parameter</button>
-                                        </div>
-                                        <div class="table-responsive">
-                                            <table id="tableMachineParameter_form1"
-                                                class="table table-bordered table-hover nowrap" style="width: 100%;">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Action</th>
-                                                        <th>Status</th>
-                                                        <th>Machine Name</th>
-                                                        <th>Device Name</th>
-                                                        <th>Material Name</th>
-                                                        <th>Machine No.</th>
-                                                    </tr>
-                                                </thead>
-                                            </table>
-                                        </div>
-                                    </div>
-
-                                    <div class="tab-pane fade" id="machineParameterForm2" role="tabpanel"
-                                        aria-labelledby="tabmachineParameterForm2">
-                                        <div style="float: right;">
-                                            <div class="text-right mt-4">
-                                                <button type="button" class="btn btn-primary mb-3" id="btnAddMachine2"
-                                                    data-bs-toggle="modal" data-bs-target="#modalAddMachine2"><i
-                                                        class="fa fa-plus fa-md"></i> Add Machine Parameter</button>
-                                            </div>
-                                        </div> <br><br>
-                                        <div class="table-responsive">
-                                            <table id="tableMachineParameter_form2"
-                                                class="table table-sm table-bordered table-striped table-hover"
-                                                style="width: 100%;">
-                                                <thead>
-                                                    <tr style="text-align:center">
-                                                        <th>Action</th>
-                                                        <th>Status</th>
-                                                        <th>Machine Name</th>
-                                                        <th>Device Name</th>
-                                                        <th>Material Name</th>
-                                                        <th>Machine No.</th>
-                                                    </tr>
-                                                </thead>
-                                            </table>
-                                        </div>
-                                    </div>
-
+                                <div class="text-right mt-4">
+                                    <button type="button" class="btn btn-primary mb-3" id="btnAddMachine1"
+                                        data-bs-toggle="modal" data-bs-target="#modalAddMachine"><i
+                                            class="fa fa-plus fa-md"></i> Add Machine Parameter</button>
                                 </div>
+                                <div class="table-responsive">
+                                    <table id="tableMachineParameter_form1"
+                                        class="table table-bordered table-hover nowrap" style="width: 100%;">
+                                        <thead>
+                                            <tr>
+                                                <th>Action</th>
+                                                <th>Status</th>
+                                                <th>Machine Name</th>
+                                                <th>Device Name</th>
+                                                <th>Material Name</th>
+                                                <th>Machine No.</th>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+
                             </div>
                         </div>
                     </div>
@@ -153,8 +110,8 @@
     </div>
 
     <!-- Add User Modal Start -->
-    <div class="modal fade" id="modalAddMachine1" data-bs-keyboard="false" data-bs-backdrop="static">
-        <div class="modal-dialog modal-xl-custom">
+    <div class="modal fade" id="modalAddMachine" data-bs-keyboard="false" data-bs-backdrop="static">
+        <div class="modal-dialog modal-l">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title"><i class="fas fa-info-circle"></i>&nbsp;Add Machine Parameter</h4>
@@ -169,6 +126,86 @@
                                     <!-- For User Id -->
                                     <input type="hidden" name="machine_parameter_id" id="machineParameterId">
                                     <div class="row">
+                                        <div class="col-md-6 col-lg-4">
+                                            <label class="form-label"> Machine No.<span
+                                                    class="text-danger" title="Required">*</span></label>
+                                            <div>
+                                                <input type="text" class="form-control" name="machine_name1"
+                                                id="textMachineName1" placeholder="Machine Name1">
+                                            </div>
+                                            <label class="form-label">Machine Type<span class="text-danger"
+                                                title="Required">*</span></label>
+                                            <div>
+                                                <input type="radio" id="machine_nissei" name="machine_type"
+                                                    value="1">
+                                                <label for="dryerOven">NISSEI</label>
+                                                <div style="display: inline-block; margin-left:50px;"></div>
+                                                <input type="radio" id="machine_fanuc" name="machine_type"
+                                                    value="2">
+                                                <label for="dryerDHD">FANUC</label>
+                                                <div style="display: inline-block; margin-left:50px;"></div>
+                                                <input type="radio" id="machine_sodick" name="machine_type"
+                                                    value="2">
+                                                <label for="dryerDHD">SODICK</label>
+                                                <div style="display: inline-block; margin-left:50px;"></div>
+                                                <input type="radio" id="machine_jintong" name="machine_type"
+                                                    value="2">
+                                                <label for="dryerDHD">JINTONG</label>
+                                            </div>
+
+
+
+
+                                        </div>
+                                        <div class="col-md-6 col-lg-4">
+                                            <label class="form-label"> Date</label>
+                                            <div>
+                                                <input type="date" class="form-control" name="machine_name"
+                                                id="textDate">
+                                            </div>
+                                            <label class="form-label"> Machine Ton</label>
+                                            <div>
+                                                <input type="text" class="form-control" name="machine_ton"
+                                                id="textMachineTon">
+                                            </div>
+
+
+
+                                        </div>
+                                        <div class="col-md-6 col-lg-4">
+                                            <label class="form-label"> Operator</label>
+                                            <div>
+                                                <select class="form-select select2" id="selectOperator"
+                                                    name="machine_id">
+                                                </select>
+                                            </div>
+
+
+
+                                        </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                                         <div class="col-md-6 col-lg-4">
                                             <label for="selectMachine" class="form-label"> Machine<span
                                                     class="text-danger" title="Required">*</span></label>
@@ -1840,7 +1877,7 @@
                     return;
                     if(response['is_success'] == 'true'){
                         $('#modal-loading').modal('hide');
-                        $('#modalAddMachine1').modal('hide');
+                        $('#modalAddMachine').modal('hide');
                         $('#formAddMachine1')[0].reset();
                         toastr.success('Save Sucessfully');
                         dt.MachineParameter.draw();
@@ -2030,8 +2067,42 @@
                 }
             });
         }
+
+        function getOperatorName(cboElement){
+            let result = '<option value="0" disabled selected>Select One</option>';
+            $.ajax({
+                url: 'get_operator_name',
+                method: 'get',
+                dataType: 'json',
+                beforeSend: function(){
+                    result = '<option value="0" disabled>Loading</option>';
+                    cboElement.html(result);
+                },
+                success: function(response){
+                    let disabled = '';
+                    if(response['machine_details_1'].length > 0){
+                        result = '<option value="0" disabled selected>Select One</option>';
+                        for(let index = 0; index < response['machine_details_1'].length; index++){
+                            result += '<option value="' + response['machine_details_1'][index].id + '">' + response['machine_details_1'][index].machine_name + '</option>';
+                        }
+                    }
+                    else{
+                        result = '<option value="0" disabled>No User Role found</option>';
+                    }
+                    cboElement.html(result);
+                },
+                error: function(data, xhr, status){
+                    result = '<option value="0" disabled>Reload Again</option>';
+                    cboElement.html(result);
+                    console.log('Data: ' + data + "\n" + "XHR: " + xhr + "\n" + "Status: " + status);
+                }
+            });
+        }
+
         getMachine1($('#selectMachine1'));
         getMachine2($('#selectMachine2'));
+
+        getOperatorName($('#selectOperator'));
 
         $('#formAddMachine1').submit(function(e) {
             e.preventDefault();

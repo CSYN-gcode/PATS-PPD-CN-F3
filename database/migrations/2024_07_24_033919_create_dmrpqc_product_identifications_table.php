@@ -15,6 +15,7 @@ class CreateDmrpqcProductIdentificationsTable extends Migration
     {
         Schema::create('dmrpqc_product_identifications', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->string('category')->default(1)->comment = '1 - FACTORY 1 & 2, 2 - FACTORY 3';
             $table->string('device_name');
             $table->string('po_number');
             $table->string('item_code');

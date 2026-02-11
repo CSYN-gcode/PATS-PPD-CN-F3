@@ -95,22 +95,31 @@
                                             <input type="text" class="form-control invalidScan" id="txtPoQuantity" placeholder="---------------" readonly>
                                         </div>
                                     </div>
+
+                                    <div class="col-2 d-none">
+                                        <div class="input-group input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text"><strong>Production Lot:</strong></span>
+                                            </div>
+                                            <input type="text" class="form-control invalidScan" id="txtOQCProdLotNo">
+                                        </div>
+                                    </div>
                                 </div>
                                 <!-- End Search PO No. -->
 
                                 <div class="card-body"><!-- Start Page Content -->
                                     <ul class="nav nav-tabs mb-3" role="tablist">
                                         <li class="nav-item" role="presentation">
-                                            <button class="nav-link active" id="oqcInspectionForInspection" data-bs-toggle="tab" data-bs-target="#oqcInspection" type="button" role="tab">For Inspection</button>
+                                            <button class="nav-link oqc-button active" id="oqcInspectionForInspection" value="2" data-bs-toggle="tab" data-bs-target="#oqcInspection" type="button" role="tab">For Inspection</button>
                                         </li>
                                         <li class="nav-item" role="presentation">
-                                            <button class="nav-link" id="oqcInspectionLotAccepted" data-bs-toggle="tab" data-bs-target="#oqcInspection" type="button" role="tab">Lot Accepted</button>
+                                            <button class="nav-link oqc-button" id="oqcInspectionLotAccepted" value="1" data-bs-toggle="tab" data-bs-target="#oqcInspection" type="button" role="tab">Lot Accepted</button>
                                         </li>
                                         <li class="nav-item" role="presentation">
-                                            <button class="nav-link" id="oqcInspectionLotRejected" data-bs-toggle="tab" data-bs-target="#oqcInspection" type="button" role="tab">Lot Rejected</button>
+                                            <button class="nav-link oqc-button" id="oqcInspectionLotRejected" value="0" data-bs-toggle="tab" data-bs-target="#oqcInspection" type="button" role="tab">Lot Rejected</button>
                                         </li>
                                     </ul>
-    
+
                                     <div class="tab-content" id="myTabContent"> <!-- tab-content -->
                                         <div class="tab-pane fade show active" id="oqcInspection" role="tabpanel">
                                             <div class="table-responsive"><!-- Table responsive -->
@@ -134,7 +143,7 @@
                                                     </thead>
                                                 </table>
                                             </div><!-- /.Table responsive -->
-                                        </div>                                        
+                                        </div>
                                     </div> <!-- /.tab-content -->
 
                                 </div><!-- /.End Page Content -->
@@ -228,8 +237,8 @@
                                         <div class="input-group-prepend w-50">
                                             <span class="input-group-text w-100"><strong>Machine No.</strong></span>
                                         </div>
-                                        <select class="form-select form-control-sm machineNumberDropdown" id="slctOqcInspectionMachineNo" name="oqc_inspection_machine_no">
-                                        </select>
+                                        <input type="text" class="form-control form-control-sm" id="txtOqcInspectionMachineNo" name="oqc_inspection_machine_no" readonly>
+
                                     </div>
                                     <div class="input-group input-group-sm mb-3">
                                         <div class="input-group-prepend w-50">
@@ -423,11 +432,11 @@
                                         <div class="input-group-prepend w-30">
                                             <span class="input-group-text w-100"><strong>Work Week</strong></span>
                                         </div>
-                                        <input type="text" class="form-control form-control-sm" id="txtOqcInspectionWorkWeek" name="oqc_inspection_work_week" onkeypress="return event.charCode >= 48 && event.charCode <= 57">
+                                        <input type="text" class="form-control form-control-sm" id="txtOqcInspectionWorkWeek" name="oqc_inspection_work_week" onkeypress="return event.charCode >= 48 && event.charCode <= 57" readonly>
                                         <div class="input-group-prepend w-30">
                                             <span class="input-group-text w-100"><strong>Fiscal Year</strong></span>
                                         </div>
-                                        <input type="text" class="form-control form-control-sm" id="txtOqcInspectionFiscalYear" name="oqc_inspection_fiscal_year" onkeypress="return event.charCode >= 48 && event.charCode <= 57">
+                                        <input type="text" class="form-control form-control-sm" id="txtOqcInspectionFiscalYear" name="oqc_inspection_fiscal_year" onkeypress="return event.charCode >= 48 && event.charCode <= 57" readonly>
                                     </div>
 
                                     <div class="input-group input-group-sm mb-3">
@@ -442,7 +451,7 @@
                                         <div class="input-group-prepend w-50">
                                             <span class="input-group-text w-100"><strong>Shift</strong></span>
                                         </div>
-                                        <select class="form-select form-control-sm slct" id="slctOqcInspectionShift" name="oqc_inspection_shift">
+                                        <select class="form-select form-control-sm" id="slctOqcInspectionShift" name="oqc_inspection_shift">
                                             <option selected disabled>-- Select --</option>
                                             <option value="A">Shift A</option>
                                             <option value="B">Shift B</option>
@@ -595,9 +604,9 @@
                         data: function (pamparam){
                             pamparam.poNo = getPoNo
                             pamparam.getStatus = getStatus
+                            // pamparam.prodLotNo = $("#txtOQCProdLotNo").val();
                         },
                     },
-
                     "columns":[
                         { "data" : "action", orderable:false, searchable:false },
                         { "data" : "status" },
@@ -615,23 +624,21 @@
                     "columnDefs": [
                         // { className: "align-center", targets: [1, 2] },
                     ],
+                    "rowCallback": function( row, data, index ) {
+                        if (data["production_lot"] == $("#txtOQCProdLotNo").val()){
+                            $("td",row).css("background-color","#74f27f");
+                            $("td",row).css("color","#000000");
+                            $("td",row).find('.actionEditOqcInspection').prop('disabled', false);
+                            // $("td",row).css("color","#000000");
+                            // $("td",row).css("background-color","#EDE26B");
+                            // $("td",row).css("color","#ffffff");
+                            // $('td:eq(1)', row).html('<center><span class="badge badge-pill badge-warning" style="height: 20px;">To Receive</span></center>');
+                        }
+                    }
                 })
 
-                $('#oqcInspectionForInspection').click(function (e) { 
-                    e.preventDefault();
-                    getStatus = 2
-                    dataTableOQCInspection.draw()
-                });
-
-                $('#oqcInspectionLotAccepted').click(function (e) { 
-                    e.preventDefault();
-                    getStatus = 1 
-                    dataTableOQCInspection.draw()
-                });
-
-                $('#oqcInspectionLotRejected').click(function (e) { 
-                    e.preventDefault();
-                    getStatus = 0
+                $('.oqc-button').click(function() {
+                    getStatus = event.target.getAttribute('value')
                     dataTableOQCInspection.draw()
                 });
 
@@ -675,6 +682,7 @@
                                 $('#txtPoNumber').val(po.po_number)
                                 $('#txtMaterialName').val(po.part_name)
                                 $('#txtPoQuantity').val(po.po_quantity)
+                                $("#txtOQCProdLotNo").val(po.production_lot)
                                 $('#mdlScanQrCode').modal('hide')
                         }
                         catch (error) {
@@ -693,8 +701,29 @@
                     $('#txtOqcInspectionScanUserId').addClass('d-none').val('')
                     $('#txtScanQrCode').addClass('d-none').val('')
                     $('.oqcInspectionScanning').text('')
+                    // dataTableOQCInspection.draw()//old clark 01/16/2025
 
-                    dataTableOQCInspection.draw()
+                    // const qrScannedProdRuncardItem = $('#txtScanProdRuncardQrData').val();
+                    //     let ScannedProdRuncardQrCodeVal = JSON.parse(qrScannedProdRuncardItem)
+                    //     console.log('scanned',ScannedProdRuncardQrCodeVal);
+                    //     // scannedItem = JSON.parse($(this).val());
+                    //     // scannedItem = $('#txtScanQrData').val().toUpperCase();
+                    //     // scannedItem = $('#txtScanQrData').val();
+                    //     // console.log('scannedItem', scannedItem);
+                    //     $('#tblProductionRuncard tbody tr').each(function(index, tr){
+                    //         let lot_no = $(tr).find('td:eq(5)').text().trim().toUpperCase();
+                    //         let powerOff = $(this).find('td:nth-child(1)').children().children();
+
+                    //         console.log('tbl_lot_no', lot_no);
+                    //         console.log('scannedItem', ScannedProdRuncardQrCodeVal.production_lot);
+                    //         if(ScannedProdRuncardQrCodeVal.production_lot === lot_no){
+                    //             console.log('found');
+                    //             $(tr).addClass('checked-ok');
+                    //             powerOff.removeAttr('style');
+                    //             $('#modalSearchProdRuncardData').modal('hide');
+                    //         }
+                    //         // console.log(lot_no);
+                    //     })
                 })
 
 
@@ -739,14 +768,13 @@
                     $('#txtOqcInspectionId').val(getOqcId)
                 })
 
-                $('#btnOqcInspectionViewBDrawings').click(function (e) { 
+                $('#btnOqcInspectionViewBDrawings').click(function (e) {
                     e.preventDefault();
                     window.open("http://rapid/ACDCS/prdn_home_pats_ppd?doc_no="+$('#txtBDrawingNo').val())
                     SetClassRemove('b-drawing', 'bg-success-custom font-weight-bold text-white')
                     if($('#txtCheckButton').val() == 'update'){
                         $('.actionBtnOqcInspection').removeClass('d-none')
                     }
-                    GeMaterialCodeForMachineNo($('.machineNumberDropdown'),$('#txtOqcInspectionMaterialName').val())
                 });
 
                 $(document).on('click', '.actionViewOqcInspection', function(e){
@@ -835,7 +863,7 @@
                     $('#txtScanQrCode').addClass('d-none')
                     $('.actionBtnOqcInspection').addClass('d-none')
                     $('#txtOqcInspectionScanUserId').addClass('d-none')
-                    
+
                     $(`.remove-class`).removeClass('bg-success-custom font-weight-bold text-white')
                     dataTableOQCInspection.draw()
                 })
@@ -1030,6 +1058,21 @@
                 $('#txtPoNumber').on('keypress',function(e){
                     if( e.keyCode == 13 ){
                         getPoNo =  $('#txtPoNumber').val()
+                        $.ajax({
+                            url: "production_runcard_details",
+                            type: "get",
+                            data: {
+                                getPoNo : getPoNo,
+                            },
+                            dataType: "json",
+                            success: function (response) {
+                                let getProductionRuncardDetails = response['getProductionRuncardDetails']
+                                if(getProductionRuncardDetails != null){
+                                    $('#txtMaterialName').val(getProductionRuncardDetails.part_name)
+                                    $('#txtPoQuantity').val(getProductionRuncardDetails.po_quantity)
+                                }
+                            }
+                        })
                         dataTableOQCInspection.draw()
                     }
                 })

@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\Validator;
 class DefectsInfoController extends Controller
 {
     public function view_defectsinfo(Request $request){
-        $defect_details = DefectsInfo::where('status', 0)->get();
+        // $defect_details = DefectsInfo::where('status', 0)->get();
+        $defect_details = DefectsInfo::all();
 
         return DataTables::of($defect_details)
         ->addColumn('action', function($defect_details){
@@ -19,10 +20,12 @@ class DefectsInfoController extends Controller
             $result .= "<center>";
             $result .= "<button class='btn btn-secondary btn-sm btnEdit mr-1' data-id='$defect_details->id'><i class='fa-solid fa-pen-to-square'></i></button>";
             if($defect_details->status == 0){
-                $result .= "<button class='btn btn-danger btn-sm btnDisable' data-id='$defect_details->id'><i class='fa-solid fa-ban'></i></button>";
+                // $result .= "<button class='btn btn-danger btn-sm btnDisable' data-id='$defect_details->id'><i class='fa-solid fa-ban'></i></button>";
+                $result .= "<button class='btn btn-danger btn-sm btnChangeStat' data-id='$defect_details->id' data-status='$defect_details->status'><i class='fa-solid fa-ban'></i></button>";
             }
             else{
-                $result .= "<button class='btn btn-success btn-sm btnEnable' data-id='$defect_details->id'><i class='fa-solid fa-rotate-left'></i></button>";
+                // $result .= "<button class='btn btn-success btn-sm btnEnable' data-id='$defect_details->id'><i class='fa-solid fa-rotate-left'></i></button>";
+                $result .= "<button class='btn btn-success btn-sm btnChangeStat' data-id='$defect_details->id' data-status='$defect_details->status'><i class='fa-solid fa-rotate-left'></i></button>";
             }
             $result .= "</center>";
             return $result;
@@ -115,14 +118,23 @@ class DefectsInfoController extends Controller
         return DefectsInfo::where('id', $request->id)->first();
     }
 
-    public function update_status(Request $request){
+    public function UpdateDefectsStatus(Request $request){
+        DB::beginTransaction();
+        try{
+            // $test = DefectsInfo::where('id', $request->id)->first();
+            // return $test;
+            if($request->status == 1){
+                $status = 0;
+            }else{
+                $status = 1;
+            }
 
-        // DB::beginTransaction();
-        // try{
-        //     // Device::where('id', )
-        // }catch(Exemption $e){
-        //     DB::rollback();
-        //     return $e;
-        // }
+            DefectsInfo::where('id', $request->id)->update(['status' => $status]);
+            DB::commit();
+            return response()->json(['result' => 1, 'msg' => 'Update Succesful']);
+        }catch(Exemption $e){
+            DB::rollback();
+            return $e;
+        }
     }
 }

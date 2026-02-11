@@ -267,10 +267,11 @@
 
                     <form method="post" id="formMimfPpsRequest" autocomplete="off">
                         @csrf
-                        <div class="row p-3 input_hidden1">
+                        <div class="row p-3 input_hidden">
                             <input type="text" class="col-2" id="getMimfId" name="mimf_id" placeholder="For MIMF ID" readonly>
                             <input type="text" class="col-2 reset-value" id="txtPpsWhseId" name="pps_whse_id" placeholder="For PPS Warehouse ID" readonly>
                             <input type="text" class="col-2 reset-value" id="txtMimfPpsRequestId" name="pps_request_id" placeholder="MIMF PPS Request ID" readonly>
+                            <input type="text" class="col-2 reset-value" id="txtGetMimfDeviceCode" name="get_mimf_device_name" placeholder="MIMF PPS Request ID" readonly>
                         </div>
                         <div class="modal-body">
                             <div class="row"><!-- Start Row MIMF Data -->
@@ -535,6 +536,7 @@
             $('#modalMimfPpsRequest').on('shown.bs.modal', function(event){
                 let getID       = $('#txtMimfId').val()
                 getMimfPoNo     = $('#txtMimfPmiPoNo').val()
+                $('#txtGetMimfDeviceCode').val($('#txtMimfDeviceCode').val())
 
                 $('#getMimfId').val(getID)
                 GetPpdMaterialType($('.get-mimf-device'))
@@ -658,6 +660,14 @@
                 }else{
                     $('#txtMimfNeededKgs').val('')
                 }
+            })
+
+            $(document).on('click', '.actionEditMimfPpsRequest', function(e){
+                e.preventDefault()
+                let mimfPpsRequestID = $(this).attr('mimf_pps_request-id')
+                $('#txtMimfPpsRequestId').val(mimfPpsRequestID)
+
+                GetMimfPpsRequestById(mimfPpsRequestID)
             })
 
             $('#formMimfPpsRequest').submit(function (e) { 

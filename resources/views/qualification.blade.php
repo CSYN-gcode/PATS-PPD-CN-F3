@@ -25,6 +25,8 @@
                 position: absolute;
                 opacity: 0;
             }
+
+            .checked-ok { background: #5cec4c!important; }
             /* textarea{
                 resize: none;
             } */
@@ -56,6 +58,36 @@
             <!-- Main content -->
             <section class="content">
                 <div class="container-fluid">
+                    {{-- <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-sm-2">
+                                            <label class="form-label">PO Number</label>
+                                            <div class="input-group mb-3">
+                                                <button class="btn btn-primary" id="btnScanPo" data-bs-toggle="modal" data-bs-target="#mdlScanQrCode"><i class="fa-solid fa-qrcode"></i></button>
+                                                <input type="text" class="form-control" placeholder="Search PO Number" name="po_number" id="txtSearchPONum">
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-2">
+                                            <label class="form-label">Part Code</label>
+                                            <div class="input-group mb-3">
+                                                <input type="text" class="form-control" placeholder="Product Code" aria-label="Partcode" id="txtSearchPartCode" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-2">
+                                            <label class="form-label">Material Name</label>
+                                            <div class="input-group mb-3">
+                                                <input type="text" class="form-control" placeholder="Material Name" aria-label="Materialname" id="txtSearchMatName" readonly>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div> --}}
+
                     <div class="row">
                         <div class="col-12">
                             <div class="card">
@@ -89,8 +121,20 @@
                                 <div class="card-header">
                                     <h3 class="card-title">IPQC Qualification Details</h3>
                                 </div>
+
+                                {{-- <div class="mt-2 mr-2">
+                                    <button  class="btn btn-dark" data-bs-toggle="modal"
+                                    data-bs-target="#modalVerifyData" id="btnSearchScanQr"><i
+                                        class="fa-solid fa-qrcode"></i>&nbsp; Validation of Lot #
+                                    </button><br><br>
+                                </div> --}}
+
                                 <div class="mt-2 mr-2">
-                                    <button style="float:right;" class="btn btn-primary" id="btnAddQualificationData"><i class="fa-solid fa-plus"></i> Add Qualification Inspection</button>
+                                    <button style="float:left;" class="btn btn-dark ml-3" data-bs-toggle="modal" data-bs-target="#modalSearchData" id="btnSearchScanQr">
+                                        <i class="fa-solid fa-qrcode"></i>&nbsp; Search Lot Number
+                                    </button>
+
+                                    {{-- <button style="float:right;" class="btn btn-primary" id="btnAddQualificationData"><i class="fa-solid fa-plus"></i> Add Qualification Inspection</button> --}}
                                 </div>
                                 <!-- Start Page Content -->
                                 <div class="card-body">
@@ -115,10 +159,12 @@
                                                     style="width: 100%;">
                                                     <thead>
                                                         <tr>
+                                                            <th hidden>ID</th>
                                                             <th>Action</th>
                                                             <th>Status</th>
                                                             <th>Process Status</th>
                                                             <th>Created At</th>
+                                                            <th>Device Name</th>
                                                             <th>PO Number</th>
                                                             <th>Production Lot#</th>
                                                             <th>Judgement</th>
@@ -136,10 +182,12 @@
                                                         style="width: 100%;">
                                                         <thead>
                                                             <tr>
+                                                                <th hidden>ID</th>
                                                                 <th>Action</th>
                                                                 <th>Status</th>
                                                                 <th>Process Status</th>
                                                                 <th>Created At</th>
+                                                                <th>Device Name</th>
                                                                 <th>PO Number</th>
                                                                 <th>Production Lot#</th>
                                                                 <th>Judgement</th>
@@ -157,10 +205,12 @@
                                                         style="width: 100%;">
                                                         <thead>
                                                             <tr>
+                                                                <th hidden>ID</th>
                                                                 <th>Action</th>
                                                                 <th>Status</th>
                                                                 <th>Process Status</th>
                                                                 <th>Created At</th>
+                                                                <th>Device Name</th>
                                                                 <th>PO Number</th>
                                                                 <th>Production Lot#</th>
                                                                 <th>Judgement</th>
@@ -186,6 +236,22 @@
             <!-- /.content -->
         </div>
         <!-- /.content-wrapper -->
+
+        <!-- MODALS -->
+        <div class="modal fade" id="modalSearchData">
+            <div class="modal-dialog modal-dialog-center">
+                <div class="modal-content modal-sm">
+                    <div class="modal-body">
+                        <input type="text" class="scanner w-100 hidden_scanner_input" id="txtScanQrData" name="scan_lot_number" autocomplete="off">
+                        {{-- <input type="text" class="scanner w-100 " id="txtScanVerifyData" name="scan_packing_lot_number" autocomplete="off"> --}}
+                        <div class="text-center text-secondary"><span id="modalScanQrLotNumberIdText">Scan QR Code</span><br><br><h1><i class="fa fa-qrcode fa-lg"></i></h1></div>
+                    </div>
+                </div>
+            <!-- /.modal-content -->
+            </div>
+            <!-- /.modal-dialog -->
+        </div>
+        <!-- /.modal -->
 
         <!-- CONFIRM SUBMIT MODAL START -->
         <div class="modal fade" id="modalConfirmSubmitIPQCInspection">
@@ -242,7 +308,7 @@
                                                     <label class="form-label">Production Lot #:</label>
                                                     <div class="input-group mb-2">
                                                         <div class="input-group-append w-100">
-                                                            <button class="btn btn-sm btn-info" type="button" title="Scan code" id="ScanProductLot">
+                                                            <button class="btn btn-sm btn-info" type="button" title="Scan code" id="ScanProductLot" hidden>
                                                                 <i class="fa fa-qrcode"></i>
                                                             </button>
                                                             <input type="text" class="form-control form-control-sm" name="production_lot" id="txtProductionLot" placeholder="Scan Production Lot" readonly>
@@ -250,17 +316,17 @@
                                                     </div>
                                             </div>
 
-                                            <div class="col">
+                                            <div class="col" hidden>
                                                 <label class="form-label">Qualification ID:</label>
                                                 <input type="text" class="form-control form-control-sm" id="txtQualiDetailsId" name="quali_details_id" placeholder="Auto Generate" readonly>
                                             </div>
 
-                                            <div class="col">
+                                            <div class="col" hidden>
                                                 <label class="form-label">Production Runcard ID:</label>
                                                 <input type="text" class="form-control form-control-sm" name="prod_runcard_id" id="txtProdRuncardId" placeholder="Auto Generate"readonly>
                                             </div>
 
-                                            <div class="col">
+                                            <div class="col" hidden>
                                                 <label class="form-label">Process Status:</label>
                                                 <input type="text" class="form-control form-control-sm" name="process_status" id="txtProcessStatus"  placeholder="Auto Generate"readonly>
                                             </div>
@@ -284,7 +350,18 @@
 
                                             <div class="col">
                                                 <label class="form-label">Part Code:</label>
-                                                <input type="text" class="form-control form-control-sm" name="part_code" id="txtPartCode" placeholder="Auto Generate"readonly>
+                                                <input type="text" class="form-control form-control-sm" name="part_code" id="txtPartCode" placeholder="Auto Generate" readonly>
+                                            </div>
+
+                                            <div class="col">
+                                                <div class="form-group">
+                                                    <label class="form-label text-primary">Category:</label>
+                                                    <select class="form-control form-control-sm bg-primary" type="text" name="category" id="txtCategory">
+                                                        <option disabled selected>Select Category</option>
+                                                        <option value="1">First Five</option>
+                                                        <option value="2">Sampling Monitoring</option>
+                                                    </select>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -292,7 +369,7 @@
                             </div>
                             <div class="row">
                                 <div class="col-sm-4">
-                                    <div id="QualificationAddDiv" class="">
+                                    <div id="QualificationProdDiv" class="">
                                         <div style="border: 2px; border-style:solid; padding:8px;">
                                             <div class="row">
                                                 <div class="col">
@@ -305,9 +382,8 @@
                                                     <div class="input-group input-group-sm mb-3">
                                                         <div class="input-group-prepend w-100">
                                                             <span class="input-group-text w-50" id="basic-addon1">Name</span>
-                                                            {{-- <input type="text" class="form-control form-control-sm" id="txtQualiProdName" name="quali_prod_name"> --}}
-                                                            <input type="hidden" class="form-control form-control-sm" name="quali_prod_name_id" id="txtQualiProdNameID" value="@php echo Auth::user()->id; @endphp" readonly>
-                                                            <input type="text" class="form-control form-control-sm" name="quali_prod_name" id="txtQualiProdName" value="@php echo Auth::user()->firstname.' '.Auth::user()->lastname; @endphp" readonly>
+                                                            <input type="hidden" class="form-control form-control-sm" name="quali_prod_name_id" id="txtQualiProdNameID" readonly>
+                                                            <input type="text" class="form-control form-control-sm" name="quali_prod_name" id="txtQualiProdName" placeholder="Auto Generate" readonly>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -316,7 +392,7 @@
                                                     <div class="input-group input-group-sm">
                                                         <div class="input-group-prepend w-100">
                                                             <span class="input-group-text w-100" id="basic-addon1">Date</span>
-                                                            <input type="date" class="form-control form-control-sm" id="txtQualiProdDate" name="quali_prod_date">
+                                                            <input type="date" class="form-control form-control-sm" id="txtQualiProdDate" name="quali_prod_date" required>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -327,7 +403,7 @@
                                                     <div class="input-group input-group-sm mb-3">
                                                         <div class="input-group-prepend w-100">
                                                             <span class="input-group-text w-50" id="basic-addon1">Input Qty</span>
-                                                            <input type="number" class="form-control form-control-sm" id="txtQualiProdInputQty" name="quali_prod_input_qty">
+                                                            <input type="number" class="form-control form-control-sm" id="txtQualiProdInputQty" name="quali_prod_input_qty" required>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -337,7 +413,7 @@
                                                         <div class="input-group-prepend w-50">
                                                             <span class="input-group-text w-100" id="basic-addon1">Judgement</span>
                                                         </div>
-                                                        <select class="form-control" type="text" name="quali_prod_judgement" id="txtQualiProdJudgement">
+                                                        <select class="form-control" type="text" name="quali_prod_judgement" id="txtQualiProdJudgement" required>
                                                             <option value="" disabled selected>Select Judgement</option>
                                                             <option value="1">OK</option>
                                                             <option value="2">NG</option>
@@ -350,7 +426,7 @@
                                                     <div class="input-group input-group-sm mb-3">
                                                         <div class="input-group-prepend w-100">
                                                             <span class="input-group-text w-50" id="basic-addon1">Output Qty</span>
-                                                            <input type="number" class="form-control form-control-sm" id="txtQualiProdOutputQty" name="quali_prod_output_qty">
+                                                            <input type="number" class="form-control form-control-sm" id="txtQualiProdOutputQty" name="quali_prod_output_qty" required>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -360,11 +436,12 @@
                                                         <div class="input-group-prepend w-50">
                                                             <span class="input-group-text w-100" id="basic-addon1">Actual Sample</span>
                                                         </div>
-                                                        <select class="form-control" type="text" name="quali_prod_actual_sample" id="txtQualiProdActualSample">
+                                                        <select class="form-control" type="text" name="quali_prod_actual_sample" id="txtQualiProdActualSample" required>
                                                             <option value="" disabled selected>Select Sample Used</option>
                                                             <option value="1">Japan Sample</option>
                                                             <option value="2">Evaluation Sample</option>
                                                             <option value="3">Correlation Sample</option>
+                                                            <option value="4">Last Production</option>
                                                         </select>
                                                     </div>
                                                 </div>
@@ -422,188 +499,190 @@
                                     </div>
                                 </div>
                                 <div class="col-sm-4">
-                                    <div style="border: 2px; border-style:solid; padding:8px;" class="">
-                                        <div class="row">
-                                            <div class="col">
-                                                <b><span class="form-control-sm">QC</span></b>
+                                    <div id="QualificationQcDiv" class="">
+                                        <div style="border: 2px; border-style:solid; padding:8px;" class="">
+                                            <div class="row">
+                                                <div class="col">
+                                                    <b><span class="form-control-sm">QC</span></b>
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        <div class="row">
-                                            <div class="col">
-                                                <div class="input-group input-group-sm mb-3">
-                                                    <div class="input-group-prepend w-100">
-                                                        <span class="input-group-text w-50" id="basic-addon1">Name</span>
-                                                        {{-- <input type="text" class="form-control form-control-sm" id="txtQualiQCName" name="quali_qc_name"> --}}
-                                                        <input type="hidden" class="form-control form-control-sm" name="quali_qc_name_id" id="txtQualiQCNameID" value="@php echo Auth::user()->id; @endphp" readonly>
-                                                        <input type="text" class="form-control form-control-sm" name="quali_qc_name" id="txtQualiQCName" value="@php echo Auth::user()->firstname.' '.Auth::user()->lastname; @endphp" readonly>
+                                            <div class="row">
+                                                <div class="col">
+                                                    <div class="input-group input-group-sm mb-3">
+                                                        <div class="input-group-prepend w-100">
+                                                            <span class="input-group-text w-50" id="basic-addon1">Name</span>
+                                                            <input type="hidden" class="form-control form-control-sm" name="quali_qc_name_id" id="txtQualiQCNameID" readonly>
+                                                            <input type="text" class="form-control form-control-sm" name="quali_qc_name" id="txtQualiQCName" placeholder="Auto Generate" readonly>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col">
+                                                    <div class="input-group input-group-sm">
+                                                        <div class="input-group-prepend w-100">
+                                                            <span class="input-group-text w-100" id="basic-addon1">Date</span>
+                                                            <input type="date" class="form-control form-control-sm" id="txtQualiQcDate" name="quali_qc_date">
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div class="col">
-                                                <div class="input-group input-group-sm">
-                                                    <div class="input-group-prepend w-100">
-                                                        <span class="input-group-text w-100" id="basic-addon1">Date</span>
-                                                        <input type="date" class="form-control form-control-sm" id="txtQualiQcDate" name="quali_qc_date">
+                                            <div class="row">
+                                                <div class="col">
+                                                    <div class="input-group input-group-sm mb-3">
+                                                        <div class="input-group-prepend w-100">
+                                                            <span class="input-group-text w-50" id="basic-addon1">Input Qty</span>
+                                                            <input type="number" class="form-control form-control-sm" id="txtQualiQcInputQty" name="quali_qc_input_qty">
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col">
+                                                    <div class="input-group input-group-sm mb-3">
+                                                        <div class="input-group-prepend w-50">
+                                                            <span class="input-group-text w-100" id="basic-addon1">Judgement</span>
+                                                        </div>
+                                                        <select class="form-control" type="text" name="quali_qc_judgement" id="txtQualiQcJudgement">
+                                                            <option value="" disabled selected>Select Judgement</option>
+                                                            <option value="1">OK</option>
+                                                            <option value="2">NG</option>
+                                                        </select>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                            <div class="row">
+                                                <div class="col">
+                                                    <div class="input-group input-group-sm mb-3">
+                                                        <div class="input-group-prepend w-100">
+                                                            <span class="input-group-text w-50" id="basic-addon1">Output Qty</span>
+                                                            <input type="number" class="form-control form-control-sm" id="txtQualiQcOutputQty" name="quali_qc_output_qty">
+                                                        </div>
+                                                    </div>
+                                                </div>
 
-                                        <div class="row">
-                                            <div class="col">
-                                                <div class="input-group input-group-sm mb-3">
-                                                    <div class="input-group-prepend w-100">
-                                                        <span class="input-group-text w-50" id="basic-addon1">Input Qty</span>
-                                                        <input type="number" class="form-control form-control-sm" id="txtQualiQcInputQty" name="quali_qc_input_qty">
+
+                                                <div class="col">
+                                                    <div class="input-group input-group-sm mb-3">
+                                                        <div class="input-group-prepend w-50">
+                                                            <span class="input-group-text w-100" id="basic-addon1">Actual Sample</span>
+                                                        </div>
+                                                        <select class="form-control" type="text" name="quali_qc_actual_sample" id="txtQualiQcActualSample">
+                                                            <option value="" disabled selected>Select Sample Used</option>
+                                                            <option value="1">Japan Sample</option>
+                                                            <option value="2">Evaluation Sample</option>
+                                                            <option value="3">Correlation Sample</option>
+                                                            <option value="4">Last Production</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col">
+                                                    <div class="input-group input-group-sm mb-3">
+                                                        <div class="input-group-prepend w-100">
+                                                            <span class="input-group-text w-50" id="basic-addon1">Ng Qty</span>
+                                                            <input type="number" class="form-control form-control-sm" id="txtQualiQcNgQty" name="quali_qc_ng_qty" readonly>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col">
+                                                    <div class="input-group input-group-sm mb-3">
+                                                        <div class="input-group-prepend w-50">
+                                                            <span class="input-group-text w-100" id="basic-addon1">Remarks</span>
+                                                        </div>
+                                                            <input type="text" class="form-control form-control-sm" id="txtQualiQcRemarks" name="quali_qc_remarks">
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div class="col">
-                                                <div class="input-group input-group-sm mb-3">
-                                                    <div class="input-group-prepend w-50">
-                                                        <span class="input-group-text w-100" id="basic-addon1">Judgement</span>
-                                                    </div>
-                                                    <select class="form-control" type="text" name="quali_qc_judgement" id="txtQualiQcJudgement">
-                                                        <option value="" disabled selected>Select Judgement</option>
-                                                        <option value="1">OK</option>
-                                                        <option value="2">NG</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col">
-                                                <div class="input-group input-group-sm mb-3">
-                                                    <div class="input-group-prepend w-100">
-                                                        <span class="input-group-text w-50" id="basic-addon1">Output Qty</span>
-                                                        <input type="number" class="form-control form-control-sm" id="txtQualiQcOutputQty" name="quali_qc_output_qty">
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <div class="row">
+                                                <div class="col">
+                                                    <div class="table-responsive">
+                                                        <div class="d-flex justify-content-between">
 
-
-                                            <div class="col">
-                                                <div class="input-group input-group-sm mb-3">
-                                                    <div class="input-group-prepend w-50">
-                                                        <span class="input-group-text w-100" id="basic-addon1">Actual Sample</span>
-                                                    </div>
-                                                    <select class="form-control" type="text" name="quali_qc_actual_sample" id="txtQualiQcActualSample">
-                                                        <option value="" disabled selected>Select Sample Used</option>
-                                                        <option value="1">Japan Sample</option>
-                                                        <option value="2">Evaluation Sample</option>
-                                                        <option value="3">Correlation Sample</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col">
-                                                <div class="input-group input-group-sm mb-3">
-                                                    <div class="input-group-prepend w-100">
-                                                        <span class="input-group-text w-50" id="basic-addon1">Ng Qty</span>
-                                                        <input type="number" class="form-control form-control-sm" id="txtQualiQcNgQty" name="quali_qc_ng_qty" readonly>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="col">
-                                                <div class="input-group input-group-sm mb-3">
-                                                    <div class="input-group-prepend w-50">
-                                                        <span class="input-group-text w-100" id="basic-addon1">Remarks</span>
-                                                    </div>
-                                                        <input type="text" class="form-control form-control-sm" id="txtQualiQcRemarks" name="quali_qc_remarks">
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="row">
-                                            <div class="col">
-                                                <div class="table-responsive">
-                                                    <div class="d-flex justify-content-between">
-
-                                                    </div>
-                                                    <div class="d-flex justify-content-between">
-                                                        <label>Total No. of NG: <span id="QualiQclabelTotalNumberOfNG" style="color: red;">0</span>
-                                                            <label>
-                                                                &nbsp;<li class="fa-solid fa-thumbs-down" id="labelIsTallyQc" style="color: red;"></li>
+                                                        </div>
+                                                        <div class="d-flex justify-content-between">
+                                                            <label>Total No. of NG: <span id="QualiQclabelTotalNumberOfNG" style="color: red;">0</span>
+                                                                <label>
+                                                                    &nbsp;<li class="fa-solid fa-thumbs-down" id="labelIsTallyQc" style="color: red;"></li>
+                                                                </label>
                                                             </label>
-                                                        </label>
-                                                        <button type="button" id="buttonAddQualiQcModeOfDefect" class="btn btn-sm btn-info" title="Add MOD"><i class="fa fa-plus"></i> Add MOD</button>
+                                                            <button type="button" id="buttonAddQualiQcModeOfDefect" class="btn btn-sm btn-info" title="Add MOD"><i class="fa fa-plus"></i> Add MOD</button>
+                                                        </div>
+                                                        <br>
+                                                        <table class="table table-sm" id="tableQualiQcMOD" style="min-height: 200px;">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th style="width: 55%;">Mode of Defect</th>
+                                                                    <th style="width: 15%;">QTY</th>
+                                                                    <th style="width: 10%;">Action</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                            </tbody>
+                                                        </table>
                                                     </div>
-                                                    <br>
-                                                    <table class="table table-sm" id="tableQualiQcMOD" style="min-height: 200px;">
-                                                        <thead>
-                                                            <tr>
-                                                                <th style="width: 55%;">Mode of Defect</th>
-                                                                <th style="width: 15%;">QTY</th>
-                                                                <th style="width: 10%;">Action</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                        </tbody>
-                                                    </table>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="col-sm-4">
-
-                                    <div style="border: 2px; border-style:solid; padding:10px;" class="mb-3">
-                                        <div class="row">
-                                            <div class="col">
-                                                <b><span class="form-control-sm">CT HEIGHT DATA</span></b>
-                                            </div>
-                                        </div>
-
-                                        <div class="row">
-                                            <div class="col">
-                                                <div class="input-group input-group-sm mb-3">
-                                                    <div class="input-group-prepend w-50">
-                                                        <span class="input-group-text w-100" id="basic-addon1">QC</span>
-                                                    </div>
-                                                    <select class="form-control" type="text" name="ct_height_data_qc" id="txtCtHeightDataQc">
-                                                        <option value="" disabled selected>Please Select</option>
-                                                        <option value="1">OK</option>
-                                                        <option value="2">NG</option>
-                                                        <option value="3">N/A</option>
-                                                    </select>
+                                    <div id="QualificationQcEngrDiv" class="">
+                                        <div style="border: 2px; border-style:solid; padding:10px;" class="mb-3">
+                                            <div class="row">
+                                                <div class="col">
+                                                    <b><span class="form-control-sm">CT HEIGHT DATA</span></b>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <div class="row">
-                                            <div class="col">
-                                                <div class="input-group input-group-sm mb-3">
-                                                    <div class="input-group-prepend w-50">
-                                                        <span class="input-group-text w-100" id="basic-addon1">ENG`G</span>
+                                            <div class="row">
+                                                <div class="col">
+                                                    <div class="input-group input-group-sm mb-3">
+                                                        <div class="input-group-prepend w-50">
+                                                            <span class="input-group-text w-100" id="basic-addon1">QC</span>
+                                                        </div>
+                                                        <select class="form-control" type="text" name="ct_height_data_qc" id="txtCtHeightDataQc">
+                                                            <option value="" disabled selected>Please Select</option>
+                                                            <option value="1">OK</option>
+                                                            <option value="2">NG</option>
+                                                            <option value="3">N/A</option>
+                                                        </select>
                                                     </div>
-                                                    <select class="form-control" type="text" name="ct_height_data_engr" id="txtCtHeightDataEngr">
-                                                        <option value="" disabled selected>Please Select</option>
-                                                        <option value="1">OK</option>
-                                                        <option value="2">NG</option>
-                                                        <option value="3">N/A</option>
-                                                    </select>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <div class="row">
-                                            <div class="col">
-                                                <div class="input-group input-group-sm mb-3">
-                                                    <div class="input-group-prepend w-50">
-                                                        <span class="input-group-text w-100" id="basic-addon1">Remarks</span>
+                                            <div class="row">
+                                                <div class="col">
+                                                    <div class="input-group input-group-sm mb-3">
+                                                        <div class="input-group-prepend w-50">
+                                                            <span class="input-group-text w-100" id="basic-addon1">ENG`G</span>
+                                                        </div>
+                                                        <select class="form-control" type="text" name="ct_height_data_engr" id="txtCtHeightDataEngr">
+                                                            <option value="" disabled selected>Please Select</option>
+                                                            <option value="1">OK</option>
+                                                            <option value="2">NG</option>
+                                                            <option value="3">N/A</option>
+                                                        </select>
                                                     </div>
-                                                        <input type="text" class="form-control form-control-sm" id="txtCtHeightDataRemarks" name="ct_height_data_remarks">
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col">
+                                                    <div class="input-group input-group-sm mb-3">
+                                                        <div class="input-group-prepend w-50">
+                                                            <span class="input-group-text w-100" id="basic-addon1">Remarks</span>
+                                                        </div>
+                                                            <input type="text" class="form-control form-control-sm" id="txtCtHeightDataRemarks" name="ct_height_data_remarks">
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-
-                                    <div id="Qualification2AddDiv" class="">
+                                    <div id="QualificationQcEngr2Div" class="">
                                         <div class="row">
                                             <div class="col">
                                                 <div class="form-group">
@@ -634,8 +713,8 @@
                         <button type="button" class="btn btn-success" id="btnSaveQualificationDetails">Save</button>
                         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
                     </div>
-                </div><!-- /.modal-content -->
-            </div><!-- /.modal-dialog -->
+                </div>
+            </div>
         </div>
 
         <!-- MODALS -->
@@ -730,9 +809,9 @@
                                             </div>
                                             <div class="form-group mt-1">
                                                 <label class="form-label">Inspector Name:</label>
-                                                <input type="hidden" class="form-control form-control-sm" name="inspector_id" id="txtInspectorID" readonly value="@php echo Auth::user()->id; @endphp" readonly>
+                                                <input type="hidden" class="form-control form-control-sm" name="inspector_id" id="txtInspectorID" readonly>
                                                 {{-- `${let name = response['users'][index].rapidx_user_details.firstname + response['users'][index].rapidx_user_details.lastname}` --}}
-                                                <input type="text" class="form-control form-control-sm" name="inspector_name" id="txtInspectorName" value="@php echo Auth::user()->firstname.' '.Auth::user()->lastname; @endphp" readonly>
+                                                <input type="text" class="form-control form-control-sm" name="inspector_name" id="txtInspectorName" placeholder="Auto Generate" readonly>
                                             </div>
                                             {{-- DROPDOWN --}}
                                             <div class="form-group">
@@ -847,6 +926,51 @@
                 console.log('sad');
                 GetQualiPartName($('.txtSelectPartName'));
             }, 500);
+
+            $('#modalSearchData').on('shown.bs.modal', function () {
+                $('#txtScanQrData').focus();
+            });
+
+            $('#txtScanQrData').on('keyup', function(e){
+                if(e.keyCode == 13){
+                    try{
+                        const qrScannedItem = $('#txtScanQrData').val();
+                        let ScannedQrCodeVal = JSON.parse(qrScannedItem)
+                        let scannedItem = ScannedQrCodeVal.production_lot.toUpperCase();
+                        console.log('scanned lot', scannedItem);
+                        // scannedItem = JSON.parse($(this).val());
+                        // scannedItem = $('#txtScanQrData').val().toUpperCase();
+                        // scannedItem = $('#txtScanQrData').val();
+                        // console.log('scannedItem', scannedItem);
+                        $('#tblRuncardQualiPending tbody tr').each(function(index, tr){
+                            let lot_no = $(tr).find('td:eq(6)').text().trim().toUpperCase();
+                            let powerOff = $(this).find('td:nth-child(1)').children().children();
+                            if(scannedItem === lot_no){
+                                console.log('SCAN FOUND', scannedItem === lot_no);
+                                $(tr).addClass('checked-ok');
+                                powerOff.removeAttr('style');
+                                $('#modalSearchData').modal('hide');
+                            }
+                        })
+
+                        $('#tblRuncardQualiCompleted tbody tr').each(function(index, tr){
+                            let lot_no = $(tr).find('td:eq(6)').text().trim().toUpperCase();
+                            let powerOff = $(this).find('td:nth-child(1)').children().children();
+                            if(scannedItem === lot_no){
+                                console.log('SCAN FOUND', scannedItem === lot_no);
+                                $(tr).addClass('checked-ok');
+                                powerOff.removeAttr('style');
+                                $('#modalSearchData').modal('hide');
+                            }
+                        })
+                    }
+                    catch (e){
+                        toastr.error('Invalid Sticker');
+                        console.log(e);
+                    }
+                    $(this).val('');
+                }
+            });
         });
         </script>
     @endsection
